@@ -33,7 +33,7 @@ pnpm dev
 ```
 
 ```bash
-pnpm test        # 203 testes
+pnpm test        # 313 testes
 pnpm typecheck
 pnpm build
 ```
@@ -65,6 +65,34 @@ e o detector de variação de preço nunca dispararia.
 
 A rota `/api/extract` não grava: propõe e devolve a evidência do casamento.
 Só `/api/extract/confirm` persiste.
+
+## Planos de ação
+
+Você diz quanto quer economizar e o motor propõe cortes ranqueados por
+economia sobre dor, você aceita item a item, e o sistema cobra mês a mês.
+
+**Dor não é opinião, é estrutura.** Um algoritmo ingênuo ordena por valor e
+sugere cortar "Fraldas Zaya R$ 80" antes de "Revolut Metal R$ 79,99", porque
+80 > 79,99. Um plano que sugere cortar fralda de bebê é pior que nenhum plano.
+
+Rodar contra os dados reais expôs quatro absurdos, cada um virou trava: cancelar
+cartão (é agregado de compras, não assinatura), cancelar ração dos cachorros
+(eles comem), cancelar internet (ele trabalha de casa), e a Vercel ranqueando
+acima de uma assinatura morta (dividir por dor era penalidade fraca demais, virou
+exponencial). Como a lista de exceções sempre terá buracos, há uma trava que não
+depende de acertar nomes: categoria essencial nunca aceita cancelamento, só redução.
+
+O motor prefere dizer que não chega a fingir que chega: para R$ 2.000/mês de meta,
+ele responde que dá R$ 764,67 cortando todo o supérfluo.
+
+## Itemização de fatura
+
+Cartão vira conta, a compra vira despesa (que bate na categoria) e pagar a fatura
+vira transferência (que não bate). Sem isso, o mercado conta duas vezes: uma em
+Alimentação e outra dentro do "Cartão João Caixa R$ 1.808,60".
+
+Há teste contra o Postgres real provando que a despesa total não muda ao itemizar,
+e que Alimentação sobe exatamente o valor do mercado que estava escondido.
 
 ## Decisões de modelagem
 
@@ -101,6 +129,10 @@ julho/2026 é 13.185,98. Há um teste que trava esse comportamento em
 
 ## Estado
 
-Fase 1 (fundação) implementada: schema, motor de recorrência, importador,
-detectores e dashboard. Faltam: persistência plugada no Neon, escrita humana
-(Fase 2), narração e planos de ação (Fases 3 e 4).
+Fases 1 a 4 implementadas: schema em Postgres, importador idempotente, escrita
+humana, fluxo de caixa projetado, narração, planos de ação e itemização de fatura.
+
+Falta: plugar o Neon em produção, backfill dos anos anteriores de planilha, e o
+import de OFX. O OFX ficou de fora deliberadamente, porque o formato varia por
+banco e não havia nenhum extrato real para testar: escrever contra uma
+especificação imaginada seria pior que não escrever.
