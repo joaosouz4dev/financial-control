@@ -26,18 +26,45 @@ Deploy na Vercel.
 
 ```bash
 pnpm install
-cp .env.example .env.local   # preencha DATABASE_URL
+cp .env.example .env.local   # DATABASE_URL e ANTHROPIC_API_KEY
+pnpm db:migrate
+pnpm import:xlsx             # importa /planilhas, idempotente
 pnpm dev
 ```
 
-O dashboard lê os `.xlsx` de `/planilhas` enquanto o banco não está plugado,
-para que a UI seja desenvolvida contra os dados reais em vez de mock.
-
 ```bash
-pnpm test        # 143 testes
+pnpm test        # 203 testes
 pnpm typecheck
 pnpm build
 ```
+
+Para desenvolver contra Postgres local em vez do Neon, aponte a `DATABASE_URL`
+para o container: o driver é escolhido pela URL (Neon fala WebSocket e trava
+contra Postgres local).
+
+## Escrita humana
+
+Você escreve `paguei 90 de água hoje` e o sistema dá baixa no previsto em vez
+de criar um lançamento duplicado. `netflix subiu pra 59,90` atualiza a regra,
+não lança gasto.
+
+Três decisões carregam o design:
+
+**A tool pede o valor como texto**, não como número. Se pedisse número, o
+modelo calcularia, e "550 por semana" viraria o que ele decidisse. Pedindo
+string ele copia `550` e o TypeScript multiplica por 4 com Decimal. Isso
+elimina a classe inteira de "a LLM inventou o número".
+
+**A data é uma referência, não um calendário.** A LLM diz `{type: "today"}` e o
+servidor resolve o fuso. Se pedíssemos ISO, a data de hoje teria que ir no
+system prompt e invalidaria o prompt cache em todo request.
+
+**A intenção é um campo.** Sem distinguir `record` de `price_change`, um
+"netflix subiu pra 59,90" lançaria R$ 59,90 hoje e deixaria a regra em 44,90,
+e o detector de variação de preço nunca dispararia.
+
+A rota `/api/extract` não grava: propõe e devolve a evidência do casamento.
+Só `/api/extract/confirm` persiste.
 
 ## Decisões de modelagem
 
