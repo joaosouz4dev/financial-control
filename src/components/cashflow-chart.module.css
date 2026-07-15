@@ -1,0 +1,61 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.2rem;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* Linha 2px, join/cap redondo. */
+.line {
+  stroke: var(--chart-line);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* O zero e cromo, nao dado: recessivo e tracejado. */
+.zero {
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.5;
+}
+
+/* Anel na cor da superficie: separa o ponto da linha sem tinta extra de dado. */
+.dotNeg {
+  fill: var(--chart-alert);
+  stroke: var(--bg-elevated);
+  stroke-width: 2;
+}
+
+.dotEnd {
+  fill: var(--chart-line);
+  stroke: var(--bg-elevated);
+  stroke-width: 2;
+}
+
+.cap {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.capNeg {
+  font-size: 0.78rem;
+  color: var(--chart-alert);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.empty {
+  padding: 1.2rem;
+  font-size: 0.84rem;
+  color: var(--ink-faint);
+}

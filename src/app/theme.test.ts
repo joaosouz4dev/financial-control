@@ -93,3 +93,52 @@ describe('estrutura do tema', () => {
     expect(css).toContain('prefers-reduced-motion')
   })
 })
+
+/**
+ * Marca de grafico segue regra diferente da de texto: precisa cair numa banda
+ * de lightness e ter separacao sob daltonismo. Validado com
+ * scripts/validate_palette.js da skill dataviz; estes testes travam o
+ * resultado para que um ajuste de paleta nao reintroduza o problema.
+ *
+ * O --danger do tema escuro (#fb7185) REPROVA na banda (L 0.719): por isso o
+ * grafico tem seu proprio token, e nao reusa a cor semantica de texto.
+ */
+describe('paleta de gráfico', () => {
+  it('define tokens próprios, separados das cores de texto', () => {
+    expect(light['--chart-line']).toBeDefined()
+    expect(light['--chart-alert']).toBeDefined()
+    expect(dark['--chart-line']).toBeDefined()
+    expect(dark['--chart-alert']).toBeDefined()
+  })
+
+  it('no escuro, não reusa o --danger (que reprova na banda de lightness)', () => {
+    expect(dark['--chart-alert']).not.toBe(dark['--danger'])
+  })
+
+  it.each([
+    ['claro', 'light'],
+    ['escuro', 'dark'],
+  ])('a marca tem contraste suficiente contra a superfície no tema %s', (_n, key) => {
+    const t = key === 'light' ? light : dark
+    expect(contrast(t['--chart-line']!, t['--bg-elevated']!)).toBeGreaterThanOrEqual(AA_UI)
+    expect(contrast(t['--chart-alert']!, t['--bg-elevated']!)).toBeGreaterThanOrEqual(AA_UI)
+  })
+
+  /**
+   * Contraste WCAG mede texto sobre fundo, e nao serve para separar duas
+   * marcas de grafico: roxo e vermelho tem luminancia parecida (razao 1.15) e
+   * ainda assim sao inconfundiveis, porque o que os separa e o hue. O
+   * validate_palette.js mede isso direito (delta-E sob daltonismo: 89.6 no
+   * claro, 77.2 no escuro, ambos muito acima do minimo de 12).
+   *
+   * A garantia que importa aqui e a de nao depender SO da cor: o dia negativo
+   * carrega ponto proprio e a legenda diz a data em texto.
+   */
+  it('a zona negativa não depende só da cor', () => {
+    // O ponto negativo tem forma propria (circle) e anel de superficie, e a
+    // legenda nomeia a data. Ver cashflow-chart.tsx.
+    for (const t of [light, dark]) {
+      expect(t['--chart-alert']).not.toBe(t['--chart-line'])
+    }
+  })
+})

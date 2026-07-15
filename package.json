@@ -15,7 +15,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "import:xlsx": "tsx scripts/import-xlsx.ts"
+    "import:xlsx": "tsx scripts/import-xlsx.ts",
+    "db:materialize": "tsx scripts/materialize.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",

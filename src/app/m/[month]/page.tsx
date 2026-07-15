@@ -8,6 +8,12 @@ import { InsightCard } from '@/components/insight-card'
 import { CategoryBar } from '@/components/category-bar'
 import { MonthNav } from '@/components/month-nav'
 import { QuickEntry } from '@/components/quick-entry'
+import { CashflowChart } from '@/components/cashflow-chart'
+import { MonthSummaryCard } from '@/components/month-summary-card'
+import { getFlowItems, getOpeningBalance } from '@/lib/cashflow/queries'
+import { projectCashflow, upcomingCommitments } from '@/lib/cashflow/project'
+import { narrateInsights, type Summary } from '@/lib/insights/narrate'
+import { monthRange } from '@/lib/queries'
 import Link from 'next/link'
 import styles from './page.module.css'
 
@@ -41,10 +47,18 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
 
   const insights = buildInsights(month, summary, txs, series)
 
-  const upcoming = txs
-    .filter((t) => t.kind === 'expense' && t.paidAt === null)
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
-    .slice(0, 10)
+  // Fluxo de caixa: o total do mes pode fechar positivo e o saldo mergulhar no
+  // dia 12. A planilha nunca mostrou isso.
+  const { from, to } = monthRange(month)
+  const [flowItems, opening] = await Promise.all([
+    getFlowItems(from, to),
+    getOpeningBalance(from),
+  ])
+  const projection = projectCashflow(flowItems, opening, from, to)
+
+  const narrated = await narrateSafely(month, insights, projection)
+
+  const upcoming = upcomingCommitments(flowItems, from, 31).slice(0, 10)
 
   return (
     <div className={styles.shell}>
@@ -103,6 +117,13 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
           </article>
         </section>
 
+        {narrated && (
+          <MonthSummaryCard
+            summary={narrated}
+            insightTitles={new Map(insights.map((i) => [i.fingerprint, i.title]))}
+          />
+        )}
+
         <QuickEntry />
 
         <div className={styles.columns}>
@@ -122,6 +143,14 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
                 </div>
               </section>
             )}
+
+            <section className={styles.panel} aria-labelledby="cf-h">
+              <div className={styles.panelHead}>
+                <h2 id="cf-h" className={styles.panelTitle}>Fluxo de caixa</h2>
+                <span className={styles.panelHint}>saldo dia a dia</span>
+              </div>
+              <CashflowChart projection={projection} />
+            </section>
 
             <section className={styles.panel} aria-labelledby="cat-h">
               <div className={styles.panelHead}>
@@ -147,9 +176,9 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
               ) : (
                 <ul className={styles.upList}>
                   {upcoming.map((t) => (
-                    <li key={t.id} className={styles.upItem}>
-                      <span className={styles.upDay} aria-hidden>{t.dueDate.slice(8, 10)}</span>
-                      <span className={styles.upDesc}>{t.description}</span>
+                    <li key={`${t.date}-${t.label}`} className={styles.upItem}>
+                      <span className={styles.upDay} aria-hidden>{t.date.slice(8, 10)}</span>
+                      <span className={styles.upDesc}>{t.label}</span>
                       <span className={`${styles.upValue} tnum`}>{formatBRL(t.amountCents)}</span>
                     </li>
                   ))}
@@ -161,6 +190,37 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
       </main>
     </div>
   )
+}
+
+/**
+ * A narracao e um extra: se a chave nao esta configurada ou a LLM falhou, o
+ * dashboard segue com os fatos crus. Os detectores sao o produto; o conselho
+ * e o acabamento.
+ */
+async function narrateSafely(
+  month: string,
+  insights: Insight[],
+  projection: ReturnType<typeof projectCashflow>,
+): Promise<Summary | null> {
+  if (!process.env.ANTHROPIC_API_KEY || insights.length === 0) return null
+
+  try {
+    const r = await narrateInsights({
+      month,
+      insights,
+      cashflow: {
+        closingBalanceCents: projection.closingBalanceCents,
+        firstNegativeDate: projection.firstNegative?.date ?? null,
+        firstNegativeCents: projection.firstNegative?.balanceCents ?? null,
+        troughDate: projection.trough?.date ?? null,
+        troughCents: projection.trough?.balanceCents ?? null,
+      },
+    })
+    return r.summary
+  } catch (e) {
+    console.error('narração falhou, seguindo sem ela:', e)
+    return null
+  }
 }
 
 /** Roda os detectores deterministicos sobre os dados do banco. */

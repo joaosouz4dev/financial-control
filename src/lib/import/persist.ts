@@ -11,7 +11,7 @@ import {
   importedTransactions,
 } from '@/db/schema'
 import { parseWorkbook, type ParsedEntry, type ParsedSheet } from './xlsx'
-import { isVolatileByNature } from '../classify'
+import { deservesRecurrence } from '../classify'
 
 /**
  * Persiste uma planilha no banco.
@@ -74,6 +74,25 @@ export function stableLabel(description: string, installmentTotal?: number | nul
   return installmentTotal ? `${base} (${installmentTotal}x)` : base
 }
 
+/**
+ * Desambigua lancamentos com o mesmo nome DENTRO do mesmo mes.
+ *
+ * O Joao tem dois "Cartão João Caixa", ambos dia 14, com valores diferentes
+ * (375,08 e 1.808,60) que se repetem identicos todo mes. Nome nao distingue,
+ * dia nao distingue, e a linha da planilha desloca quando ele insere algo.
+ *
+ * O que distingue e que os dois coexistem no MESMO mes: o primeiro
+ * "Cartão João Caixa" de junho e o mesmo primeiro de julho. Entao a ordem de
+ * aparicao dentro do mes e a identidade.
+ *
+ * Casar por valor resolveria o cartao e quebraria a Netflix: 44,90 em junho e
+ * 59,90 em julho viraria duas regras, e o detector de variacao de preco
+ * perderia a serie que precisa comparar.
+ */
+export function disambiguate(label: string, ordinal: number): string {
+  return ordinal === 0 ? label : `${label} #${ordinal + 1}`
+}
+
 export async function importWorkbook(filePath: string, filename: string): Promise<ImportResult> {
   const parsed = await parseWorkbook(filePath, filename)
   if (!parsed.period) {
@@ -102,6 +121,10 @@ export async function importWorkbook(filePath: string, filename: string): Promis
   let skipped = 0
   let rulesCreated = 0
 
+  // Ordem de aparicao dentro do mes: e o que separa os dois "Cartão João
+  // Caixa" sem quebrar a serie da Netflix.
+  const seenLabels = new Map<string, number>()
+
   for (const e of parsed.entries) {
     const hash = dedupHash(filename, e)
 
@@ -123,10 +146,22 @@ export async function importWorkbook(filePath: string, filename: string): Promis
     const cat = catSlug ? catBySlug.get(catSlug) : undefined
 
     // Recorrencia: cria a regra na primeira vez que o lancamento aparece.
-    const label = stableLabel(e.description, e.installment?.total)
+    //
+    // TODO lancamento da planilha e recorrente, inclusive cartao: a fatura
+    // vence todo mes. Antes isto usava isVolatileByNature e o cartao ficava
+    // sem regra, apagando ~R$ 4 mil/mes da projecao de fluxo de caixa.
+    // "Entra no detector de preco?" e "merece regra?" sao perguntas distintas.
+    const baseLabel = stableLabel(e.description, e.installment?.total)
+    const ordinal = seenLabels.get(baseLabel) ?? 0
+    seenLabels.set(baseLabel, ordinal + 1)
+    const label = disambiguate(baseLabel, ordinal)
+
     let ruleId: string | null = null
 
-    if (!isVolatileByNature(e.description) || e.installment) {
+    if (deservesRecurrence(e.description)) {
+      // Casa so por label. O label ja carrega o ordinal, entao os dois cartoes
+      // sao regras distintas e a Netflix continua uma serie unica mesmo com o
+      // valor mudando de 44,90 para 59,90.
       const existing = await db
         .select()
         .from(recurrenceRules)

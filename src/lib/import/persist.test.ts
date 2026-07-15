@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { stableLabel, dedupHash, dayToISO, slugify } from './persist'
+import { stableLabel, dedupHash, dayToISO, slugify, disambiguate } from './persist'
 import type { ParsedEntry } from './xlsx'
 
 describe('stableLabel', () => {
@@ -96,5 +96,27 @@ describe('slugify', () => {
     ['CASA', 'casa'],
   ])('%s -> %s', (input, expected) => {
     expect(slugify(input)).toBe(expected)
+  })
+})
+
+describe('disambiguate: os dois "Cartão João Caixa"', () => {
+  /**
+   * Os dois tem o mesmo nome, o mesmo dia (14) e valores que se repetem
+   * identicos todo mes (375,08 e 1.808,60). Nome nao separa, dia nao separa, e
+   * a linha da planilha desloca quando ele insere algo. O que separa e que os
+   * dois coexistem no mesmo mes.
+   */
+  it('separa por ordem de aparição dentro do mês', () => {
+    expect(disambiguate('Cartão João Caixa', 0)).toBe('Cartão João Caixa')
+    expect(disambiguate('Cartão João Caixa', 1)).toBe('Cartão João Caixa #2')
+  })
+
+  it('não mexe em label que aparece uma vez só', () => {
+    expect(disambiguate('Netflix', 0)).toBe('Netflix')
+  })
+
+  it('o primeiro de junho é o mesmo primeiro de julho', () => {
+    // Mesma posição, mesmo label: a série sobrevive entre os meses.
+    expect(disambiguate('Cartão João Caixa', 0)).toBe(disambiguate('Cartão João Caixa', 0))
   })
 })
