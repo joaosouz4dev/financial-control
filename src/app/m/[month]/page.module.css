@@ -276,3 +276,9 @@
   padding: 0.15em 0.4em;
   border-radius: 4px;
 }
+
+.allPaid {
+  padding: 1.2rem;
+  font-size: 0.86rem;
+  color: var(--ink-faint);
+}
