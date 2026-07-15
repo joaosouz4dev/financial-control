@@ -18,6 +18,7 @@
     "import:xlsx": "tsx scripts/import-xlsx.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
     "@neondatabase/serverless": "^1.1.0",
     "dayjs": "^1.11.21",
     "decimal.js": "^10.6.0",

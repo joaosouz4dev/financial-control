@@ -7,6 +7,7 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { InsightCard } from '@/components/insight-card'
 import { CategoryBar } from '@/components/category-bar'
 import { MonthNav } from '@/components/month-nav'
+import { QuickEntry } from '@/components/quick-entry'
 import Link from 'next/link'
 import styles from './page.module.css'
 
@@ -101,6 +102,8 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
             </span>
           </article>
         </section>
+
+        <QuickEntry />
 
         <div className={styles.columns}>
           <div className={styles.colMain}>
