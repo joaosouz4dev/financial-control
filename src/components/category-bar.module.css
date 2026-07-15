@@ -1,0 +1,93 @@
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.top {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.name {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.count {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--ink-faint);
+  background: var(--bg-sunken);
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius-pill);
+  font-variant-numeric: tabular-nums;
+}
+
+.value {
+  margin-left: auto;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.track {
+  position: relative;
+  display: flex;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-sunken);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  background: var(--brand);
+  border-radius: var(--radius-pill);
+  transition: width 0.4s ease;
+}
+
+.fillOver {
+  background: var(--danger);
+}
+
+/* O excedente vaza para fora do trilho: estouro se le pela forma. */
+.overflow {
+  height: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--danger),
+    var(--danger) 3px,
+    color-mix(in srgb, var(--danger) 55%, transparent) 3px,
+    color-mix(in srgb, var(--danger) 55%, transparent) 6px
+  );
+  opacity: 0.75;
+}
+
+.bottom {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+}
+
+.metaText {
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+
+.overText {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.goal {
+  color: var(--ink-faint);
+  font-size: 0.7rem;
+}
+
+.noGoal {
+  color: var(--ink-faint);
+  font-style: italic;
+}
