@@ -77,6 +77,9 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
         </div>
         <div className={styles.headerActions}>
           <MonthNav prev={prevMonth} next={nextMonth} />
+          <Link href="/planos" className={styles.navLink}>
+            Planos
+          </Link>
           <span className={styles.contextChip}>Pessoal</span>
           <ThemeToggle />
         </div>

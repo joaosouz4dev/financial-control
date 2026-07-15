@@ -282,3 +282,17 @@
   font-size: 0.86rem;
   color: var(--ink-faint);
 }
+
+.navLink {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.navLink:hover {
+  background: var(--brand-subtle);
+  color: var(--brand);
+}

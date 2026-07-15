@@ -1,0 +1,224 @@
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.meta {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  margin-top: 0.15rem;
+}
+
+.status {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.2em 0.55em;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.draft {
+  background: var(--bg-sunken);
+  color: var(--ink-soft);
+}
+
+.active {
+  background: var(--brand-subtle);
+  color: var(--brand);
+}
+
+.done {
+  background: var(--ok-subtle);
+  color: var(--ok);
+}
+
+.abandoned {
+  background: var(--bg-sunken);
+  color: var(--ink-faint);
+}
+
+.checkin {
+  padding: 0.9rem 1.2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.onTrack {
+  background: var(--ok-subtle);
+}
+
+.offTrack {
+  background: var(--warn-subtle);
+}
+
+.checkinHead {
+  font-size: 0.86rem;
+  margin-bottom: 0.5rem;
+}
+
+.onTrack .checkinHead {
+  color: var(--ok);
+}
+
+.offTrack .checkinHead {
+  color: var(--warn);
+}
+
+.checkinItems {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.checkinItem {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* O estado se le pelo texto do badge, nao so pela cor. */
+.badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.15em 0.45em;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.kept {
+  background: var(--ok-subtle);
+  color: var(--ok);
+}
+
+.partial {
+  background: var(--warn-subtle);
+  color: var(--warn);
+}
+
+.broken {
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+
+.unknown {
+  background: var(--bg-sunken);
+  color: var(--ink-faint);
+}
+
+.ciLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.ciNote {
+  font-size: 0.74rem;
+  color: var(--ink-faint);
+}
+
+.pending {
+  padding: 0.9rem 1.2rem;
+}
+
+.pendingHead {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 0.5rem;
+}
+
+.items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.itemBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.itemLabel {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.itemSaving {
+  font-size: 0.74rem;
+  color: var(--ink-faint);
+}
+
+.decide {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.accept,
+.reject {
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-strong);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.accept {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+
+.accept:hover:not(:disabled) {
+  background: var(--brand-hover);
+}
+
+.reject {
+  color: var(--ink-soft);
+}
+
+.reject:hover:not(:disabled) {
+  border-color: var(--ink-faint);
+  color: var(--ink);
+}
+
+.accept:disabled,
+.reject:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
