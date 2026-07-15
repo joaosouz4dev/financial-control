@@ -34,3 +34,7 @@ out/
 # Dados financeiros: nunca commitar
 /planilhas/
 *.xlsx
+
+# Build artifacts
+*.tsbuildinfo
+tsconfig.tsbuildinfo
