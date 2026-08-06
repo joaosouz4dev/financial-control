@@ -10,6 +10,13 @@ import { MonthNav } from '@/components/month-nav'
 import { CashflowChart } from '@/components/cashflow-chart'
 import { MonthSummaryCard } from '@/components/month-summary-card'
 import { LedgerTable } from '@/components/ledger-table'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc.js'
+import timezone from 'dayjs/plugin/timezone.js'
+import { TZ } from '@/lib/nl/resolve'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
 import { getLedger } from '@/lib/ledger'
 import { getFlowItems, getOpeningBalance } from '@/lib/cashflow/queries'
 import { projectCashflow, upcomingCommitments } from '@/lib/cashflow/project'
@@ -112,7 +119,9 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
 
 
         <section aria-label="Lançamentos do mês">
-          <LedgerTable ledger={ledger} month={month} />
+          {/* "Hoje" e resolvido no servidor, no fuso do Joao: o relogio do
+              browser pode estar em outro fuso e pintaria a linha errada. */}
+          <LedgerTable ledger={ledger} month={month} today={dayjs().tz(TZ).format('YYYY-MM-DD')} />
         </section>
 
         <div className={styles.columns}>

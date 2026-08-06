@@ -8,6 +8,13 @@
       "when": 1784129408469,
       "tag": "0000_dapper_freak",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786031172058,
+      "tag": "0002_categorias_e_chat",
+      "breakpoints": true
     }
   ]
 }

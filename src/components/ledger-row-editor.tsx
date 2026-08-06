@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { LedgerRow } from '@/lib/ledger'
+import { useCategories } from './use-categories'
 import styles from './ledger-row-editor.module.css'
 
 /**
@@ -11,16 +12,6 @@ import styles from './ledger-row-editor.module.css'
  * O valor aceita formula ("=4*550"), do mesmo jeito que a planilha. Quem
  * avalia e o servidor, com Decimal.
  */
-
-const CATEGORIES = [
-  { slug: 'casa', name: 'Casa' },
-  { slug: 'transporte', name: 'Transporte' },
-  { slug: 'saude', name: 'Saúde' },
-  { slug: 'alimentacao', name: 'Alimentação' },
-  { slug: 'lazer', name: 'Lazer' },
-  { slug: 'investimento', name: 'Investimento' },
-  { slug: 'outros', name: 'Outros' },
-]
 
 export function LedgerRowEditor({
   row,
@@ -37,6 +28,7 @@ export function LedgerRowEditor({
   const [day, setDay] = useState(String(row.dueDay))
   const [categorySlug, setCategorySlug] = useState(row.categorySlug ?? '')
   const [paid, setPaid] = useState(row.paid)
+  const categories = useCategories()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   /* confirm() nativo e sincrono: trava o renderer inteiro enquanto o dialogo
@@ -152,7 +144,7 @@ export function LedgerRowEditor({
             disabled={busy}
           >
             <option value="">Sem categoria</option>
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <option key={c.slug} value={c.slug}>
                 {c.name}
               </option>

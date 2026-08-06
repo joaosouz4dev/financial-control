@@ -6,6 +6,7 @@ import { formatBRL } from '@/lib/month-summary'
 import { LedgerRowEditor } from './ledger-row-editor'
 import { PaidToggle } from './paid-toggle'
 import { NewRowForm } from './new-row-form'
+import { dueStatus, type DueStatus } from '@/lib/due-status'
 import styles from './ledger-table.module.css'
 
 /**
@@ -14,8 +15,28 @@ import styles from './ledger-table.module.css'
  * Cada linha e clicavel e abre o editor inline: nome, valor, dia, categoria e
  * status. Usa a linguagem de cor da planilha (despesa avermelhada, receita
  * esverdeada) para o Joao reconhecer o ambiente.
+ *
+ * As quatro faixas da formatacao condicional da planilha continuam valendo:
+ * pago, atrasado, vence em ate 3 dias, e em aberto (sem cor).
  */
-export function LedgerTable({ ledger, month }: { ledger: Ledger; month: string }) {
+/* Mapa explicito: 'due-soon' tem hifen e nao vira nome de classe por template. */
+const ROW_CLASS: Record<DueStatus, string> = {
+  paid: styles.row_paid!,
+  overdue: styles.row_overdue!,
+  'due-soon': styles.row_due_soon!,
+  open: styles.row_open!,
+}
+
+export function LedgerTable({
+  ledger,
+  month,
+  today,
+}: {
+  ledger: Ledger
+  month: string
+  /** Vem do servidor: o "hoje" do fuso do Joao, nao o do relogio do browser. */
+  today: string
+}) {
   const [editing, setEditing] = useState<string | null>(null)
   const [adding, setAdding] = useState<'expense' | 'income' | null>(null)
 
@@ -32,6 +53,7 @@ export function LedgerTable({ ledger, month }: { ledger: Ledger; month: string }
         setEditing={setEditing}
         adding={adding === 'expense'}
         setAdding={setAdding}
+        today={today}
       />
       <LedgerColumn
         title="Receitas"
@@ -44,6 +66,7 @@ export function LedgerTable({ ledger, month }: { ledger: Ledger; month: string }
         setEditing={setEditing}
         adding={adding === 'income'}
         setAdding={setAdding}
+        today={today}
       />
     </div>
   )
@@ -60,6 +83,7 @@ function LedgerColumn({
   setEditing,
   adding,
   setAdding,
+  today,
 }: {
   title: string
   tone: 'expense' | 'income'
@@ -71,6 +95,7 @@ function LedgerColumn({
   setEditing: (id: string | null) => void
   adding: boolean
   setAdding: (k: 'expense' | 'income' | null) => void
+  today: string
 }) {
   return (
     <section className={`${styles.col} ${styles[tone]}`} aria-label={title}>
@@ -120,8 +145,9 @@ function LedgerColumn({
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) =>
-                editing === r.id ? (
+              {rows.map((r) => {
+                const st = dueStatus(r, today)
+                return editing === r.id ? (
                   <tr key={r.id} className={styles.editingRow}>
                     <td colSpan={4}>
                       <LedgerRowEditor row={r} month={month} onClose={() => setEditing(null)} />
@@ -130,7 +156,7 @@ function LedgerColumn({
                 ) : (
                   <tr
                     key={r.id}
-                    className={`${r.paid ? styles.rowPaid : styles.rowDue} ${styles.clickable}`}
+                    className={`${ROW_CLASS[st]} ${styles.clickable}`}
                     onClick={() => setEditing(r.id)}
                     tabIndex={0}
                     role="button"
@@ -147,7 +173,25 @@ function LedgerColumn({
                     </td>
                     <td className={styles.tdDesc}>
                       <span className={styles.desc}>{r.description}</span>
-                      {r.categoryName && <span className={styles.cat}>{r.categoryName}</span>}
+                      {r.categoryName && (
+                        <span className={styles.cat}>
+                          {/* O ponto e reforco: o nome ao lado carrega a
+                              identidade, entao a cor nunca decide sozinha. */}
+                          <span
+                            className={styles.catDot}
+                            style={
+                              r.categoryColor
+                                ? ({
+                                    '--cat-light': r.categoryColor.light,
+                                    '--cat-dark': r.categoryColor.dark,
+                                  } as React.CSSProperties)
+                                : undefined
+                            }
+                            aria-hidden
+                          />
+                          {r.categoryName}
+                        </span>
+                      )}
                     </td>
                     <td className={`${styles.tdValue} tnum`}>{formatBRL(r.amountCents)}</td>
                     <td className={styles.tdStatus}>
@@ -159,8 +203,8 @@ function LedgerColumn({
                       />
                     </td>
                   </tr>
-                ),
-              )}
+                )
+              })}
             </tbody>
           </table>
         </div>
