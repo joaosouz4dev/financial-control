@@ -224,3 +224,29 @@
   text-align: right;
   vertical-align: middle;
 }
+
+.colHeadRight {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+/* "+ Adicionar" no cabecalho de cada coluna: inserir uma linha, como na
+   planilha. Discreto ate o hover, para nao competir com o total. */
+.addBtn {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--line-strong);
+  color: var(--ink-soft);
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.addBtn:hover {
+  border-style: solid;
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-subtle);
+}

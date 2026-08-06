@@ -1,0 +1,260 @@
+.wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 clamp(0.8rem, 3vw, 1.5rem);
+}
+
+.thread {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.2rem 0;
+}
+
+.welcome {
+  margin: auto 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  color: var(--ink-faint);
+}
+
+.welcomeTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.examples {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.examples li {
+  padding: 0.5rem 0.9rem;
+  background: var(--bg-sunken);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  margin: 0 auto;
+}
+
+.msg {
+  display: flex;
+}
+
+.fromUser {
+  justify-content: flex-end;
+}
+
+.fromBot {
+  justify-content: flex-start;
+}
+
+.bubble {
+  max-width: 78%;
+  padding: 0.65rem 0.95rem;
+  border-radius: 1.1rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.fromUser .bubble {
+  background: var(--brand);
+  color: var(--brand-ink);
+  border-bottom-right-radius: 0.3rem;
+}
+
+.fromBot .bubble {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-bottom-left-radius: 0.3rem;
+}
+
+/* Cartao de confirmacao: a previa antes de gravar. */
+.previewCard {
+  align-self: flex-start;
+  width: min(100%, 30rem);
+  background: var(--bg-elevated);
+  border: 1px solid var(--brand);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.pvItem {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.pvItem:last-of-type {
+  border-bottom: none;
+}
+
+.pvHead {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.15em 0.45em;
+  border-radius: 4px;
+  background: var(--bg-sunken);
+  color: var(--ink-soft);
+}
+
+.record {
+  background: var(--brand-subtle);
+  color: var(--brand);
+}
+
+.price_change {
+  background: var(--warn-subtle);
+  color: var(--warn);
+}
+
+.new_recurring {
+  background: var(--mint-subtle);
+  color: var(--mint-ink);
+}
+
+.cancel {
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+
+.pvLabel {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.pvValue {
+  margin-left: auto;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.pvMeta {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+}
+
+.pvError {
+  padding: 0.8rem 1rem;
+  font-size: 0.84rem;
+  color: var(--danger);
+}
+
+.pvActions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.8rem 1rem;
+  border-top: 1px solid var(--line);
+  background: var(--bg-sunken);
+}
+
+.confirm {
+  font-weight: 700;
+  font-size: 0.84rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: var(--brand-ink);
+  transition: background 0.15s ease;
+}
+
+.confirm:hover:not(:disabled) {
+  background: var(--brand-hover);
+}
+
+.discard {
+  font-weight: 600;
+  font-size: 0.84rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+}
+
+.discard:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.confirm:disabled,
+.discard:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* O composer fica colado embaixo, como em qualquer app de mensagem. */
+.composer {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.9rem 0 1.2rem;
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.92rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-sunken);
+  color: var(--ink);
+  transition: border-color 0.15s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+.input::placeholder {
+  color: var(--ink-faint);
+}
+
+.send {
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 0.75rem 1.4rem;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--brand-ink);
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.send:hover:not(:disabled) {
+  background: var(--brand-hover);
+}
+
+.send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
