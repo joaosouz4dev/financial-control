@@ -1,18 +1,16 @@
+'use client'
+
 /**
- * Aplica o tema antes da primeira pintura. Sem isto o app pisca branco
- * antes de virar escuro (FOUC), que e o defeito classico de dark mode.
- * Roda inline no <head>, antes do React hidratar.
+ * Aplica o tema salvo antes da primeira pintura, evitando o flash de branco
+ * antes de virar escuro (FOUC classico de dark mode).
+ *
+ * Precisa de 'use client': o Next 16 recusa <script> renderizado no servidor
+ * (o script nunca executaria na hidratacao do cliente). Como Client Component,
+ * o React nao tenta renderizar no servidor, e o <script> cru no <head> roda
+ * antes de qualquer hidratacao.
  */
+const themeInit = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}})()`
+
 export function ThemeScript() {
-  const code = `
-    (function () {
-      try {
-        var stored = localStorage.getItem('theme')
-        if (stored === 'dark' || stored === 'light') {
-          document.documentElement.dataset.theme = stored
-        }
-      } catch (e) {}
-    })()
-  `
-  return <script dangerouslySetInnerHTML={{ __html: code }} />
+  return <script dangerouslySetInnerHTML={{ __html: themeInit }} />
 }
