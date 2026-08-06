@@ -3,11 +3,10 @@ import { listMonths, getMonthTransactions, getGoals, getPriceSeries } from '@/li
 import { summarizeMonth, formatBRL, formatMonth } from '@/lib/month-summary'
 import { detectPriceChanges, detectIncomeConcentration, detectCatchAllCategory, detectGoalBreaches, type Insight } from '@/lib/insights/detectors'
 import { isVolatileByNature } from '@/lib/classify'
-import { ThemeToggle } from '@/components/theme-toggle'
+import { AppHeader } from '@/components/app-header'
 import { InsightCard } from '@/components/insight-card'
 import { CategoryBar } from '@/components/category-bar'
 import { MonthNav } from '@/components/month-nav'
-import { QuickEntry } from '@/components/quick-entry'
 import { CashflowChart } from '@/components/cashflow-chart'
 import { MonthSummaryCard } from '@/components/month-summary-card'
 import { LedgerTable } from '@/components/ledger-table'
@@ -65,38 +64,9 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
 
   return (
     <div className={styles.shell}>
-      <header className={styles.header}>
-        <div className={styles.brand}>
-          <Link href="/" className={styles.logo} aria-label="Início">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M3 17l5-5 4 3 8-8" />
-              <path d="M16 7h5v5" />
-            </svg>
-          </Link>
-          <div>
-            <h1 className={styles.title}>Controle Financeiro</h1>
-            <p className={styles.subtitle}>{formatMonth(month)}</p>
-          </div>
-        </div>
-        <div className={styles.headerActions}>
-          <MonthNav prev={prevMonth} next={nextMonth} />
-          <nav className={styles.nav} aria-label="Seções">
-            <Link href="/historico" className={styles.navLink}>
-              Histórico
-            </Link>
-            <Link href="/metas" className={styles.navLink}>
-              Metas
-            </Link>
-            <Link href="/planos" className={styles.navLink}>
-              Planos
-            </Link>
-            <Link href="/conta" className={styles.navLink} aria-label="Conta">
-              Conta
-            </Link>
-          </nav>
-          <ThemeToggle />
-        </div>
-      </header>
+      <AppHeader title="Controle Financeiro" subtitle={formatMonth(month)}>
+        <MonthNav prev={prevMonth} next={nextMonth} />
+      </AppHeader>
 
       <main className={styles.main}>
         <section className={styles.stats} aria-label="Resumo do mês">
@@ -140,7 +110,6 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
           />
         )}
 
-        <QuickEntry />
 
         <section aria-label="Lançamentos do mês">
           <LedgerTable ledger={ledger} month={month} />

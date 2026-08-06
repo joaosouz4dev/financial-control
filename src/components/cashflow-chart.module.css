@@ -59,3 +59,98 @@
   font-size: 0.84rem;
   color: var(--ink-faint);
 }
+
+/* O tooltip precisa de um pai posicionado. */
+.plotWrap {
+  position: relative;
+}
+
+.dayLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--ink-faint);
+}
+
+.crosshair {
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  pointer-events: none;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  padding: 0.55rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 11rem;
+  max-width: 16rem;
+  font-size: 0.76rem;
+}
+
+.ttDate {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ttBalance {
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+}
+
+.ttNeg {
+  color: var(--chart-alert);
+  font-weight: 700;
+}
+
+.ttItems {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.2rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--line);
+}
+
+.ttItem {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+
+.ttLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-soft);
+}
+
+.ttAmount {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ttIn {
+  color: var(--series-income);
+}
+
+.ttOut {
+  color: var(--ink);
+}
+
+.ttMore {
+  color: var(--ink-faint);
+  font-size: 0.7rem;
+}

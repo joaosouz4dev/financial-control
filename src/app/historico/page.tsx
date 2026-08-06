@@ -1,7 +1,6 @@
-import Link from 'next/link'
 import { getHistory } from '@/lib/history'
 import { formatBRL } from '@/lib/month-summary'
-import { ThemeToggle } from '@/components/theme-toggle'
+import { AppHeader } from '@/components/app-header'
 import { HistoryChart } from '@/components/history-chart'
 import { CategoryRanking } from '@/components/category-ranking'
 import styles from './page.module.css'
@@ -16,22 +15,10 @@ export default async function HistoricoPage() {
 
   return (
     <div className={styles.shell}>
-      <header className={styles.header}>
-        <div className={styles.brand}>
-          <Link href="/" className={styles.back} aria-label="Voltar ao dashboard">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <div>
-            <h1 className={styles.title}>Histórico</h1>
-            <p className={styles.subtitle}>
-              {history.months.length} meses · {anos.size} anos
-            </p>
-          </div>
-        </div>
-        <ThemeToggle />
-      </header>
+      <AppHeader
+        title="Histórico"
+        subtitle={`${history.months.length} meses · ${anos.size} anos`}
+      />
 
       <main className={styles.main}>
         {history.points.length === 0 ? (

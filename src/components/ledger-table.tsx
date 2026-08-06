@@ -5,6 +5,7 @@ import type { Ledger, LedgerRow } from '@/lib/ledger'
 import { formatBRL } from '@/lib/month-summary'
 import { LedgerRowEditor } from './ledger-row-editor'
 import { PaidToggle } from './paid-toggle'
+import { NewRowForm } from './new-row-form'
 import styles from './ledger-table.module.css'
 
 /**
@@ -16,6 +17,7 @@ import styles from './ledger-table.module.css'
  */
 export function LedgerTable({ ledger, month }: { ledger: Ledger; month: string }) {
   const [editing, setEditing] = useState<string | null>(null)
+  const [adding, setAdding] = useState<'expense' | 'income' | null>(null)
 
   return (
     <div className={styles.grid}>
@@ -28,6 +30,8 @@ export function LedgerTable({ ledger, month }: { ledger: Ledger; month: string }
         month={month}
         editing={editing}
         setEditing={setEditing}
+        adding={adding === 'expense'}
+        setAdding={setAdding}
       />
       <LedgerColumn
         title="Receitas"
@@ -38,6 +42,8 @@ export function LedgerTable({ ledger, month }: { ledger: Ledger; month: string }
         month={month}
         editing={editing}
         setEditing={setEditing}
+        adding={adding === 'income'}
+        setAdding={setAdding}
       />
     </div>
   )
@@ -52,6 +58,8 @@ function LedgerColumn({
   month,
   editing,
   setEditing,
+  adding,
+  setAdding,
 }: {
   title: string
   tone: 'expense' | 'income'
@@ -61,6 +69,8 @@ function LedgerColumn({
   month: string
   editing: string | null
   setEditing: (id: string | null) => void
+  adding: boolean
+  setAdding: (k: 'expense' | 'income' | null) => void
 }) {
   return (
     <section className={`${styles.col} ${styles[tone]}`} aria-label={title}>
@@ -69,11 +79,26 @@ function LedgerColumn({
           <h3 className={styles.colTitle}>{title}</h3>
           <span className={styles.colCount}>{rows.length}</span>
         </div>
-        <div className={styles.colTotals}>
-          <strong className={`${styles.colTotal} tnum`}>{formatBRL(totalCents)}</strong>
-          <span className={styles.colSub}>{subtitle}</span>
+        <div className={styles.colHeadRight}>
+          <div className={styles.colTotals}>
+            <strong className={`${styles.colTotal} tnum`}>{formatBRL(totalCents)}</strong>
+            <span className={styles.colSub}>{subtitle}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAdding(adding ? null : tone)}
+            className={styles.addBtn}
+            aria-label={`Adicionar ${tone === 'expense' ? 'despesa' : 'receita'}`}
+            aria-expanded={adding}
+          >
+            + Adicionar
+          </button>
         </div>
       </header>
+
+      {adding && (
+        <NewRowForm kind={tone} month={month} onClose={() => setAdding(null)} />
+      )}
 
       {rows.length === 0 ? (
         <p className={styles.empty}>Nenhum lançamento.</p>

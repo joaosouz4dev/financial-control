@@ -509,3 +509,25 @@ export const recurrenceRulesRelations = relations(recurrenceRules, ({ one, many 
 export const recurrenceOccurrencesRelations = relations(recurrenceOccurrences, ({ one }) => ({
   rule: one(recurrenceRules, { fields: [recurrenceOccurrences.ruleId], references: [recurrenceRules.id] }),
 }))
+
+/**
+ * Mensagens do chat de lancamento.
+ *
+ * O historico persiste para a conversa sobreviver ao reload: sem isso, cada
+ * refresh apaga o contexto e o chat vira um formulario com outra roupa.
+ */
+export const chatMessages = pgTable(
+  'chat_messages',
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    contextId: uuid()
+      .notNull()
+      .references(() => contexts.id, { onDelete: 'cascade' }),
+    role: text().notNull(), // 'user' | 'assistant'
+    content: text().notNull(),
+    /** O que a extracao propos/gravou, para reexibir os cartoes de confirmacao. */
+    payload: jsonb().$type<Record<string, unknown>>(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('chat_messages_context_created_idx').on(t.contextId, t.createdAt)],
+)

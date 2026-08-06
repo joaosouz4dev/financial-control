@@ -1,8 +1,7 @@
-import Link from 'next/link'
 import { listPlans, checkinPlan } from '@/lib/plans/queries'
 import { listMonths } from '@/lib/queries'
 import { formatBRL, formatMonth } from '@/lib/month-summary'
-import { ThemeToggle } from '@/components/theme-toggle'
+import { AppHeader } from '@/components/app-header'
 import { PlanBuilder } from '@/components/plan-builder'
 import { PlanCard } from '@/components/plan-card'
 import type { PlanCheckin } from '@/lib/plans/track'
@@ -24,20 +23,7 @@ export default async function PlanosPage() {
 
   return (
     <div className={styles.shell}>
-      <header className={styles.header}>
-        <div className={styles.brand}>
-          <Link href="/" className={styles.logo} aria-label="Voltar ao dashboard">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <div>
-            <h1 className={styles.title}>Planos de ação</h1>
-            <p className={styles.subtitle}>acompanhando {formatMonth(currentMonth)}</p>
-          </div>
-        </div>
-        <ThemeToggle />
-      </header>
+      <AppHeader title="Planos de ação" subtitle={`acompanhando ${formatMonth(currentMonth)}`} />
 
       <main className={styles.main}>
         <PlanBuilder />
