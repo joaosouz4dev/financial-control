@@ -80,10 +80,20 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
         </div>
         <div className={styles.headerActions}>
           <MonthNav prev={prevMonth} next={nextMonth} />
-          <Link href="/planos" className={styles.navLink}>
-            Planos
-          </Link>
-          <span className={styles.contextChip}>Pessoal</span>
+          <nav className={styles.nav} aria-label="Seções">
+            <Link href="/historico" className={styles.navLink}>
+              Histórico
+            </Link>
+            <Link href="/metas" className={styles.navLink}>
+              Metas
+            </Link>
+            <Link href="/planos" className={styles.navLink}>
+              Planos
+            </Link>
+            <Link href="/conta" className={styles.navLink} aria-label="Conta">
+              Conta
+            </Link>
+          </nav>
           <ThemeToggle />
         </div>
       </header>
@@ -133,7 +143,7 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
         <QuickEntry />
 
         <section aria-label="Lançamentos do mês">
-          <LedgerTable ledger={ledger} />
+          <LedgerTable ledger={ledger} month={month} />
         </section>
 
         <div className={styles.columns}>

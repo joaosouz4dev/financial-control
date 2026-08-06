@@ -1,0 +1,147 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.9rem 1.1rem;
+  background: var(--bg-sunken);
+  border-left: 3px solid var(--brand);
+}
+
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: flex-end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.fieldWide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 2 1 12rem;
+  min-width: 0;
+}
+
+.fieldNarrow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 0 0 4.5rem;
+}
+
+.label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.input {
+  font: inherit;
+  font-size: 0.84rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-elevated);
+  color: var(--ink);
+  width: 100%;
+  min-width: 0;
+  transition: border-color 0.15s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+.input:disabled {
+  opacity: 0.6;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  padding-bottom: 0.45rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.check input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.error {
+  font-size: 0.8rem;
+  color: var(--danger);
+  background: var(--danger-subtle);
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-sm);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.save,
+.cancel,
+.delete {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.save {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+.save:hover:not(:disabled) {
+  background: var(--brand-hover);
+}
+
+.cancel {
+  color: var(--ink-soft);
+  border: 1px solid var(--line-strong);
+}
+
+.cancel:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+/* Apagar fica visualmente afastado e discreto: e a acao irreversivel. */
+.delete {
+  margin-left: auto;
+  color: var(--danger);
+  border: 1px solid transparent;
+}
+
+.delete:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: var(--danger-subtle);
+}
+
+.save:disabled,
+.cancel:disabled,
+.delete:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

@@ -16,6 +16,8 @@ export interface LedgerRow {
   categorySlug: string | null
   categoryName: string | null
   dueDay: number
+  /** YYYY-MM-DD completo: o toggle de pago precisa da data, nao so do dia. */
+  dueDate: string
   paidDay: number | null
   paid: boolean
 }
@@ -67,6 +69,7 @@ export async function getLedger(month: string, contextSlug = 'pessoal'): Promise
     categorySlug: r.categorySlug ?? null,
     categoryName: r.categoryName ?? null,
     dueDay: Number(r.dueDate.slice(8, 10)),
+    dueDate: r.dueDate,
     paidDay: r.paidAt ? r.paidAt.getUTCDate() : null,
     paid: r.paidAt !== null,
   }))

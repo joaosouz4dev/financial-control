@@ -296,3 +296,9 @@
   background: var(--brand-subtle);
   color: var(--brand);
 }
+
+.nav {
+  display: flex;
+  gap: 0.15rem;
+  flex-wrap: wrap;
+}

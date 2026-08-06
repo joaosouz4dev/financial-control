@@ -1,0 +1,58 @@
+/**
+ * Marcar pago e a acao mais frequente do mes: precisa ser obvia e ter alvo
+ * grande. Um circulo pequeno no canto e facil de nao achar e facil de errar.
+ *
+ * O estado se le por PALAVRA + simbolo + cor, nunca so por cor.
+ */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-strong);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.icon {
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Pago: verde preenchido, estado "resolvido". */
+.paid {
+  background: var(--ok-subtle);
+  border-color: transparent;
+  color: var(--ok);
+}
+
+.paid:hover {
+  border-color: var(--ok);
+}
+
+/* A pagar: contorno neutro, chamando acao. */
+.pending {
+  background: transparent;
+  color: var(--ink-faint);
+}
+
+.pending:hover {
+  border-color: var(--ok);
+  color: var(--ok);
+  background: var(--ok-subtle);
+}
+
+.busy {
+  opacity: 0.5;
+  pointer-events: none;
+}

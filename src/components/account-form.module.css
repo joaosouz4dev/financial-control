@@ -1,0 +1,52 @@
+.panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.panelTitle { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.01em; }
+
+.form { display: flex; flex-direction: column; gap: 0.9rem; }
+
+.field { display: flex; flex-direction: column; gap: 0.3rem; flex: 1 1 12rem; min-width: 0; }
+
+.row { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+
+.label {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+
+.input {
+  font: inherit; font-size: 0.88rem; padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm); border: 1px solid var(--line-strong);
+  background: var(--bg-sunken); color: var(--ink);
+  transition: border-color 0.15s ease;
+}
+.input:focus { outline: none; border-color: var(--brand); }
+.input:disabled { opacity: 0.55; }
+.input::placeholder { color: var(--ink-faint); font-size: 0.82rem; }
+
+.error {
+  font-size: 0.82rem; color: var(--danger); background: var(--danger-subtle);
+  padding: 0.5rem 0.7rem; border-radius: var(--radius-sm);
+}
+
+.success {
+  font-size: 0.82rem; color: var(--ok); background: var(--ok-subtle);
+  padding: 0.5rem 0.7rem; border-radius: var(--radius-sm);
+}
+
+.btn {
+  align-self: flex-start;
+  font-weight: 700; font-size: 0.86rem; padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-sm); background: var(--brand); color: var(--brand-ink);
+  transition: background 0.15s ease;
+}
+.btn:hover:not(:disabled) { background: var(--brand-hover); }
+.btn:disabled { opacity: 0.5; cursor: default; }

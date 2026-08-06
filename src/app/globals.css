@@ -43,6 +43,12 @@
   --ledger-expense: #c0392b;
   --ledger-income: #15794a;
 
+  /* Series do historico: validadas por validate_palette.js (banda de
+     lightness, CVD e contraste) nos dois temas. Despesa usa o roxo da marca,
+     receita o verde. Nao reusa --ledger-*: a banda de grafico e mais estreita. */
+  --series-expense: #6d28d9;
+  --series-income: #15794a;
+
   --radius: 14px;
   --radius-sm: 9px;
   --radius-pill: 999px;
@@ -87,6 +93,9 @@
     --chart-alert: #f43f5e;
     --ledger-expense: #f87171;
     --ledger-income: #4ade80;
+    /* #4ade80 tem L 0.8 e REPROVA a banda de grafico (0.48-0.67) no escuro. */
+    --series-expense: #8b5cf6;
+    --series-income: #059669;
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow: 0 4px 16px -4px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.3);
@@ -121,6 +130,8 @@
   --chart-alert: #f43f5e;
   --ledger-expense: #f87171;
   --ledger-income: #4ade80;
+  --series-expense: #8b5cf6;
+  --series-income: #059669;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow: 0 4px 16px -4px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.3);
   --shadow-lg: 0 24px 48px -12px rgb(0 0 0 / 0.6);
@@ -152,6 +163,8 @@
   --chart-alert: #e11d48;
   --ledger-expense: #c0392b;
   --ledger-income: #15794a;
+  --series-expense: #6d28d9;
+  --series-income: #15794a;
   --shadow-sm: 0 1px 2px rgb(22 18 31 / 0.06);
   --shadow: 0 4px 16px -4px rgb(22 18 31 / 0.1), 0 1px 3px rgb(22 18 31 / 0.05);
   --shadow-lg: 0 24px 48px -12px rgb(22 18 31 / 0.18);
