@@ -60,7 +60,17 @@ export async function getMonthTransactions(month: string, contextSlug?: string):
  * Metas em vigor no mes. Versionadas por effectiveFrom: um mes historico e
  * avaliado contra a meta que valia naquele mes, nao contra a meta de hoje.
  */
-export async function getGoals(month: string, contextSlug = 'pessoal'): Promise<Goal[]> {
+export async function getGoals(
+  month: string,
+  contextSlug = 'pessoal',
+  /**
+   * Investimento e destino do saldo, nao categoria de gasto: nas barras de
+   * "quanto gastei por categoria" ele distorce. Mas na TELA DE METAS ele
+   * precisa aparecer, porque e uma meta legitima e sem ele o total nao fecha
+   * 100% como na planilha.
+   */
+  opts: { includeInvestment?: boolean } = {},
+): Promise<Goal[]> {
   const { to } = monthRange(month)
 
   const rows = await db
@@ -83,7 +93,7 @@ export async function getGoals(month: string, contextSlug = 'pessoal'): Promise<
     if (seen.has(r.categorySlug)) continue
     seen.add(r.categorySlug)
     // Investimento e destino do saldo, nao categoria de despesa.
-    if (r.categorySlug === 'investimento') continue
+    if (r.categorySlug === 'investimento' && !opts.includeInvestment) continue
     out.push({ categorySlug: r.categorySlug, categoryName: r.categoryName, pct: Number(r.pct) })
   }
   return out

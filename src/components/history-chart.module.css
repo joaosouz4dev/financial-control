@@ -1,0 +1,132 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.2rem;
+}
+
+.legend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.income { background: var(--series-income); }
+.expense { background: var(--series-expense); }
+
+.plotWrap {
+  position: relative;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.lineIncome {
+  stroke: var(--series-income);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.lineExpense {
+  stroke: var(--series-expense);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.yearLabel {
+  fill: var(--ink-faint);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.crosshair {
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.dotIncome {
+  fill: var(--series-income);
+  stroke: var(--bg-elevated);
+  stroke-width: 2;
+}
+
+.dotExpense {
+  fill: var(--series-expense);
+  stroke: var(--bg-elevated);
+  stroke-width: 2;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  font-size: 0.78rem;
+  pointer-events: none;
+}
+
+.ttMonth {
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.ttRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ink-soft);
+}
+
+.ttNet {
+  margin-top: 0.2rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.74rem;
+  color: var(--ink-faint);
+}
+
+.negative {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.empty {
+  padding: 1.5rem 1.2rem;
+  font-size: 0.86rem;
+  color: var(--ink-faint);
+  text-align: center;
+}

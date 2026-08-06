@@ -1,0 +1,56 @@
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.2rem;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.name {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.total {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.track {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-sunken);
+  overflow: hidden;
+}
+
+/* Magnitude: uma cor so, o comprimento carrega a informacao. */
+.fill {
+  height: 100%;
+  background: var(--series-expense);
+  border-radius: var(--radius-pill);
+}
+
+.perMonth {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+
+.empty {
+  padding: 1.5rem 1.2rem;
+  font-size: 0.86rem;
+  color: var(--ink-faint);
+  text-align: center;
+}

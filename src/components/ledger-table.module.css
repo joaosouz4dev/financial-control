@@ -197,3 +197,30 @@
 .pending {
   color: var(--ink-faint);
 }
+
+/* Linha clicavel: o cursor e o hover sinalizam que da pra editar. */
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+.editingRow td {
+  padding: 0;
+}
+
+/* Coluna propria para o status: marcar pago e a acao mais frequente e
+   precisa de espaco proprio, nao espremida ao lado do valor. */
+.thStatus {
+  text-align: right;
+  width: 5.5rem;
+}
+
+.tdStatus {
+  padding: 0.45rem 1.1rem 0.45rem 0.4rem;
+  text-align: right;
+  vertical-align: middle;
+}

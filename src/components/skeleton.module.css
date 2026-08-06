@@ -1,0 +1,149 @@
+/**
+ * Skeletons: a navegacao entre meses busca do banco e demora. Sem feedback, a
+ * tela fica congelada e parece travada.
+ *
+ * O brilho respeita prefers-reduced-motion (definido em globals.css): quem
+ * pediu menos movimento ve um bloco estatico, nao uma animacao pulsando.
+ */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-sunken);
+  border-radius: var(--radius-sm);
+}
+
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ink) 6%, transparent),
+    transparent
+  );
+  animation: sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem clamp(1rem, 3vw, 2rem);
+  border-bottom: 1px solid var(--line);
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.logo {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.title {
+  width: 11rem;
+  height: 1rem;
+}
+
+.subtitle {
+  width: 6rem;
+  height: 0.7rem;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chip {
+  width: 4.5rem;
+  height: 1.9rem;
+  border-radius: var(--radius-pill);
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1rem;
+}
+
+.statCard {
+  height: 6.5rem;
+  border-radius: var(--radius);
+}
+
+.ledgerGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 720px) {
+  .ledgerGrid {
+    grid-template-columns: 1.35fr 1fr;
+  }
+}
+
+.ledgerCol {
+  height: 20rem;
+  border-radius: var(--radius);
+}
+
+.panel {
+  height: 13rem;
+  border-radius: var(--radius);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 940px) {
+  .columns {
+    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+  }
+}
+
+.colStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
