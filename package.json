@@ -16,11 +16,13 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "import:xlsx": "tsx scripts/import-xlsx.ts",
-    "db:materialize": "tsx scripts/materialize.ts"
+    "db:materialize": "tsx scripts/materialize.ts",
+    "user:create": "tsx scripts/create-user.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",
     "@neondatabase/serverless": "^1.1.0",
+    "@node-rs/argon2": "^2.0.2",
     "dayjs": "^1.11.21",
     "decimal.js": "^10.6.0",
     "drizzle-orm": "^0.45.2",

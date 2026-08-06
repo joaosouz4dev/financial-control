@@ -43,6 +43,8 @@ export const users = pgTable('users', {
   email: text().notNull().unique(),
   emailVerified: timestamp({ withTimezone: true }),
   image: text(),
+  /** Hash argon2 da senha. Null = usuario sem login por senha (ex OAuth). */
+  passwordHash: text(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 })
 
