@@ -1,0 +1,243 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.newRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.newInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 22rem;
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-sunken);
+  color: var(--ink);
+}
+
+.newInput:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+.create {
+  font-weight: 700;
+  font-size: 0.84rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: var(--brand-ink);
+  white-space: nowrap;
+}
+
+.create:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+/* O ponto e reforco da cor; o nome ao lado e que carrega a identidade. */
+.dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  flex: none;
+  background: var(--cat-light, var(--ink-faint));
+}
+
+:root[data-theme='dark'] .dot,
+:root[data-theme='dark'] .swatch {
+  background: var(--cat-dark, var(--ink-faint));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .dot,
+  :root:not([data-theme='light']) .swatch {
+    background: var(--cat-dark, var(--ink-faint));
+  }
+}
+
+.name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: left;
+  padding: 0.15rem 0.3rem;
+  margin-left: -0.3rem;
+  border-radius: 4px;
+}
+
+.name:hover:not(:disabled) {
+  background: var(--bg-sunken);
+}
+
+.nameEdit {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.nameInput {
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--brand);
+  background: var(--bg-sunken);
+  color: var(--ink);
+  width: 12rem;
+}
+
+.nameInput:focus {
+  outline: none;
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.swatches {
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* Alvo de 1.5rem: maior que o ponto de 0.7rem que ele representa. */
+.swatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--cat-light, var(--ink-faint));
+  background-clip: content-box;
+  padding: 3px;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+}
+
+.swatch:hover:not(:disabled) {
+  transform: scale(1.15);
+}
+
+/* A cor escolhida ganha anel na cor da tinta, nao na cor dela mesma: um anel
+   colorido sobre a propria cor nao se le. */
+.swatchOn {
+  border-color: var(--ink);
+}
+
+.swatch:disabled {
+  cursor: default;
+}
+
+.save {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+.ghost {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+}
+
+.ghost:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--bg-sunken);
+}
+
+.archive {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  color: var(--ink-faint);
+}
+
+.archive:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-subtle);
+}
+
+.confirmBar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0.4rem 0.2rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: var(--danger-subtle);
+  border: 1px solid var(--danger);
+  flex-wrap: wrap;
+}
+
+.confirmText {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+/* Fundo da superficie com texto em --danger: no dark o --danger e claro e
+   texto branco em cima dele reprovaria no contraste. */
+.archiveYes {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  white-space: nowrap;
+}
+
+.archiveYes:hover:not(:disabled) {
+  background: var(--danger);
+  color: var(--bg);
+}
+
+.error {
+  font-size: 0.82rem;
+  color: var(--danger);
+}
+
+.note {
+  font-size: 0.76rem;
+  color: var(--ink-faint);
+  line-height: 1.5;
+  max-width: 46rem;
+}

@@ -20,6 +20,7 @@ const LINKS = [
   { href: '/chat' as const, label: 'Chat' },
   { href: '/historico' as const, label: 'Histórico' },
   { href: '/metas' as const, label: 'Metas' },
+  { href: '/categorias' as const, label: 'Categorias' },
   { href: '/planos' as const, label: 'Planos' },
   { href: '/conta' as const, label: 'Conta' },
 ]

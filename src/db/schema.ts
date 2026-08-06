@@ -141,7 +141,13 @@ export const categories = pgTable(
     slug: text().notNull(), // 'casa', 'alimentacao', ...
     name: text().notNull(),
     parentId: uuid().references((): any => categories.id),
+    /* Duas cores porque o dark nao e um flip do light: cada passo e escolhido
+     * contra a sua propria superficie. Ver lib/categories/palette.ts. */
     color: text(),
+    colorDark: text(),
+    /* Ordem na lista de configuracao; empate cai no nome. */
+    sortOrder: integer().notNull().default(0),
+    archivedAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex('categories_slug_key').on(t.slug)],

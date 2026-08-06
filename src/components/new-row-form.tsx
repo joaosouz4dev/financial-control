@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useCategories } from './use-categories'
 import styles from './ledger-row-editor.module.css'
 
 /**
@@ -10,16 +11,6 @@ import styles from './ledger-row-editor.module.css'
  * Reusa o CSS do editor de linha: adicionar e editar sao a mesma interacao com
  * campos diferentes preenchidos, e ter dois visuais para isso confundiria.
  */
-
-const CATEGORIES = [
-  { slug: 'casa', name: 'Casa' },
-  { slug: 'transporte', name: 'Transporte' },
-  { slug: 'saude', name: 'Saúde' },
-  { slug: 'alimentacao', name: 'Alimentação' },
-  { slug: 'lazer', name: 'Lazer' },
-  { slug: 'investimento', name: 'Investimento' },
-  { slug: 'outros', name: 'Outros' },
-]
 
 export function NewRowForm({
   kind,
@@ -36,6 +27,7 @@ export function NewRowForm({
   const [day, setDay] = useState('1')
   const [categorySlug, setCategorySlug] = useState(kind === 'expense' ? 'outros' : '')
   const [paid, setPaid] = useState(false)
+  const categories = useCategories()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -141,7 +133,7 @@ export function NewRowForm({
               disabled={busy}
             >
               <option value="">Sem categoria</option>
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <option key={c.slug} value={c.slug}>
                   {c.name}
                 </option>

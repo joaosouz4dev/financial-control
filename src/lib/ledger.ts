@@ -1,6 +1,7 @@
 import { and, asc, eq, gte, lte } from 'drizzle-orm'
 import { db } from '@/db'
 import { transactions, categories, contexts } from '@/db/schema'
+import { resolveColors } from './categories/palette'
 
 /**
  * A tabela de lancamentos: o que a planilha mostrava e o dashboard tinha
@@ -15,6 +16,8 @@ export interface LedgerRow {
   description: string
   categorySlug: string | null
   categoryName: string | null
+  /** Par (claro, escuro) ja resolvido: a tabela nao precisa saber de paleta. */
+  categoryColor: { light: string; dark: string } | null
   dueDay: number
   /** YYYY-MM-DD completo: o toggle de pago precisa da data, nao so do dia. */
   dueDate: string
@@ -47,6 +50,8 @@ export async function getLedger(month: string, contextSlug = 'pessoal'): Promise
       description: transactions.description,
       categorySlug: categories.slug,
       categoryName: categories.name,
+      categoryColor: categories.color,
+      categoryColorDark: categories.colorDark,
       dueDate: transactions.dueDate,
       paidAt: transactions.paidAt,
     })
@@ -68,6 +73,7 @@ export async function getLedger(month: string, contextSlug = 'pessoal'): Promise
     description: r.description,
     categorySlug: r.categorySlug ?? null,
     categoryName: r.categoryName ?? null,
+    categoryColor: r.categoryName ? resolveColors(r.categoryColor, r.categoryColorDark) : null,
     dueDay: Number(r.dueDate.slice(8, 10)),
     dueDate: r.dueDate,
     paidDay: r.paidAt ? r.paidAt.getUTCDate() : null,

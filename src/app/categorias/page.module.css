@@ -1,0 +1,11 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  padding: clamp(1rem, 3vw, 1.8rem);
+  max-width: 62rem;
+  width: 100%;
+}

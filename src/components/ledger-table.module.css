@@ -132,9 +132,70 @@
   background: var(--bg-sunken);
 }
 
-.rowDue {
-  /* Nao pago: um respingo do tom da coluna na borda esquerda. */
-  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--tone) 40%, transparent);
+/* As quatro faixas da formatacao condicional da planilha.
+ *
+ * A cor de fundo e fraca de proposito: ela classifica a linha, nao compete com
+ * o valor. A barra esquerda de 3px e o que se le de longe, e ela sobrevive a
+ * modo de alto contraste, onde o color-mix do fundo desaparece. */
+
+/* Pago: sem alarme, so a marca discreta de que ja resolveu. */
+.row_paid {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--ok) 45%, transparent);
+}
+
+/* Atrasado: venceu e ninguem pagou. */
+.row_overdue {
+  background: color-mix(in srgb, var(--danger-subtle) 70%, transparent);
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.row_overdue:hover {
+  background: var(--danger-subtle);
+}
+
+/* Vence em ate 3 dias: o amarelo da formula original. */
+.row_due_soon {
+  background: color-mix(in srgb, var(--warn-subtle) 70%, transparent);
+  box-shadow: inset 3px 0 0 var(--warn);
+}
+
+.row_due_soon:hover {
+  background: var(--warn-subtle);
+}
+
+/* Em aberto e sem pressa: branco, sem faixa. Como na planilha. */
+.row_open {
+  box-shadow: inset 3px 0 0 transparent;
+}
+
+/* A zebra nao pode apagar a faixa de estado. */
+.table tbody tr.row_overdue:nth-child(even) {
+  background: color-mix(in srgb, var(--danger-subtle) 85%, transparent);
+}
+
+.table tbody tr.row_due_soon:nth-child(even) {
+  background: color-mix(in srgb, var(--warn-subtle) 85%, transparent);
+}
+
+/* Ponto da categoria: reforco do nome que vem ao lado, nunca sozinho. */
+.catDot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  margin-right: 0.35rem;
+  vertical-align: baseline;
+  background: var(--cat-light, var(--ink-faint));
+}
+
+:root[data-theme='dark'] .catDot {
+  background: var(--cat-dark, var(--ink-faint));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .catDot {
+    background: var(--cat-dark, var(--ink-faint));
+  }
 }
 
 .tdDay {
