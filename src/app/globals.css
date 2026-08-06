@@ -1,0 +1,214 @@
+/* ---------------------------------------------------------------------------
+   Design tokens.
+   Identidade: roxo eletrico + verde menta, tipografia geometrica pesada.
+   Neutros com vies roxo (nao cinza puro) para amarrar com o acento.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* Marca */
+  --brand: #6d28d9;
+  --brand-hover: #5b21b6;
+  --brand-ink: #ffffff;
+  --brand-subtle: #f3efff;
+  --mint: #2dd4bf;
+  --mint-ink: #0b3b35;
+  --mint-subtle: #e6fbf8;
+
+  /* Semantica: separada do acento de marca */
+  --ok: #0a7d5d;
+  --ok-subtle: #e6f6f1;
+  --warn: #b45309;
+  --warn-subtle: #fdf3e7;
+  --danger: #e11d48;
+  --danger-subtle: #fdeaf0;
+
+  /* Neutros com vies roxo */
+  --bg: #fafaff;
+  --bg-elevated: #ffffff;
+  --bg-sunken: #f4f3fb;
+  --ink: #16121f;
+  --ink-soft: #5a5470;
+  --ink-faint: #6f6889;
+  --line: #e7e4f0;
+  --line-strong: #d5d0e4;
+
+  /* Marca de grafico: validada por scripts/validate_palette.js (banda de
+     lightness + separacao CVD). Regra diferente da do contraste de texto. */
+  --chart-line: #6d28d9;
+  --chart-alert: #e11d48;
+
+  /* Tabela de lancamentos: a linguagem de cor da planilha (despesa vermelha,
+     receita verde). As cores exatas da planilha (E06666/93C47D) reprovam como
+     texto no claro, entao usa tons mais escuros aqui e mais claros no escuro. */
+  --ledger-expense: #c0392b;
+  --ledger-income: #15794a;
+
+  --radius: 14px;
+  --radius-sm: 9px;
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px rgb(22 18 31 / 0.06);
+  --shadow: 0 4px 16px -4px rgb(22 18 31 / 0.1), 0 1px 3px rgb(22 18 31 / 0.05);
+  --shadow-lg: 0 24px 48px -12px rgb(22 18 31 / 0.18);
+
+  --font-sans: var(--font-plus-jakarta), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --brand: #8b5cf6;
+    --brand-hover: #a78bfa;
+    --brand-ink: #0f0a1a;
+    --brand-subtle: #241a3d;
+    --mint: #2dd4bf;
+    --mint-ink: #5eead4;
+    --mint-subtle: #12312e;
+
+    --ok: #34d399;
+    --ok-subtle: #10312a;
+    --warn: #fbbf24;
+    --warn-subtle: #33260c;
+    --danger: #fb7185;
+    --danger-subtle: #3a1220;
+
+    --bg: #0d0a14;
+    --bg-elevated: #171226;
+    --bg-sunken: #120e1e;
+    --ink: #f2effa;
+    --ink-soft: #a8a0c2;
+    --ink-faint: #9a92b5;
+    --line: #2a2340;
+    --line-strong: #3d3457;
+
+    /* #fb7185 (o --danger do dark) reprova na banda de lightness para marca de
+       grafico: L 0.719 acima do limite. #f43f5e passa. */
+    --chart-line: #8b5cf6;
+    --chart-alert: #f43f5e;
+    --ledger-expense: #f87171;
+    --ledger-income: #4ade80;
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow: 0 4px 16px -4px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 24px 48px -12px rgb(0 0 0 / 0.6);
+  }
+}
+
+/* O toggle do usuario tem que vencer a media query nos dois sentidos. */
+:root[data-theme='dark'] {
+  --brand: #8b5cf6;
+  --brand-hover: #a78bfa;
+  --brand-ink: #0f0a1a;
+  --brand-subtle: #241a3d;
+  --mint: #2dd4bf;
+  --mint-ink: #5eead4;
+  --mint-subtle: #12312e;
+  --ok: #34d399;
+  --ok-subtle: #10312a;
+  --warn: #fbbf24;
+  --warn-subtle: #33260c;
+  --danger: #fb7185;
+  --danger-subtle: #3a1220;
+  --bg: #0d0a14;
+  --bg-elevated: #171226;
+  --bg-sunken: #120e1e;
+  --ink: #f2effa;
+  --ink-soft: #a8a0c2;
+  --ink-faint: #9a92b5;
+  --line: #2a2340;
+  --line-strong: #3d3457;
+  --chart-line: #8b5cf6;
+  --chart-alert: #f43f5e;
+  --ledger-expense: #f87171;
+  --ledger-income: #4ade80;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow: 0 4px 16px -4px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 24px 48px -12px rgb(0 0 0 / 0.6);
+}
+
+:root[data-theme='light'] {
+  --brand: #6d28d9;
+  --brand-hover: #5b21b6;
+  --brand-ink: #ffffff;
+  --brand-subtle: #f3efff;
+  --mint: #2dd4bf;
+  --mint-ink: #0b3b35;
+  --mint-subtle: #e6fbf8;
+  --ok: #0a7d5d;
+  --ok-subtle: #e6f6f1;
+  --warn: #b45309;
+  --warn-subtle: #fdf3e7;
+  --danger: #e11d48;
+  --danger-subtle: #fdeaf0;
+  --bg: #fafaff;
+  --bg-elevated: #ffffff;
+  --bg-sunken: #f4f3fb;
+  --ink: #16121f;
+  --ink-soft: #5a5470;
+  --ink-faint: #6f6889;
+  --line: #e7e4f0;
+  --line-strong: #d5d0e4;
+  --chart-line: #6d28d9;
+  --chart-alert: #e11d48;
+  --ledger-expense: #c0392b;
+  --ledger-income: #15794a;
+  --shadow-sm: 0 1px 2px rgb(22 18 31 / 0.06);
+  --shadow: 0 4px 16px -4px rgb(22 18 31 / 0.1), 0 1px 3px rgb(22 18 31 / 0.05);
+  --shadow-lg: 0 24px 48px -12px rgb(22 18 31 / 0.18);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Todo digito que alinha em coluna usa tabular. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

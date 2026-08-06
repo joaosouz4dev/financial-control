@@ -1,0 +1,50 @@
+.wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1.1rem;
+  background: var(--bg);
+}
+
+.card {
+  width: 100%;
+  max-width: 24rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: clamp(1.5rem, 5vw, 2.2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: var(--brand-ink);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  line-height: 1.3;
+}

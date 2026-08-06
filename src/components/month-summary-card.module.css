@@ -1,0 +1,94 @@
+.wrap {
+  background: var(--brand);
+  color: var(--brand-ink);
+  border-radius: var(--radius);
+  padding: 1.3rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  box-shadow: var(--shadow);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--brand-ink) 72%, transparent);
+}
+
+.hint {
+  font-size: 0.7rem;
+  color: color-mix(in srgb, var(--brand-ink) 58%, transparent);
+}
+
+.headline {
+  font-size: clamp(1.05rem, 2.4vw, 1.3rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.body {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--brand-ink) 88%, transparent);
+  text-wrap: pretty;
+}
+
+.actions {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.3rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid color-mix(in srgb, var(--brand-ink) 20%, transparent);
+}
+
+.action {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem;
+  align-items: start;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mint);
+  margin-top: 0.45rem;
+  flex-shrink: 0;
+}
+
+.actionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.actionText {
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* A evidencia em mono: sao numeros, e numeros pedem mono. */
+.basis {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}

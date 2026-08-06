@@ -21,3 +21,20 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Next
+.next/
+next-env.d.ts
+out/
+
+# Env
+.env
+.env.local
+
+# Dados financeiros: nunca commitar
+/planilhas/
+*.xlsx
+
+# Build artifacts
+*.tsbuildinfo
+tsconfig.tsbuildinfo

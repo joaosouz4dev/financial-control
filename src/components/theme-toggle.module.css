@@ -1,0 +1,22 @@
+.toggle {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--bg-elevated);
+  color: var(--ink-soft);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.toggle:hover {
+  color: var(--brand);
+  border-color: var(--line-strong);
+}
+
+/* Antes do tema resolver, ocupa o mesmo espaco para nao empurrar o layout. */
+.placeholder {
+  width: 18px;
+  height: 18px;
+}

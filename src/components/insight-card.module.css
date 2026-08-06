@@ -1,0 +1,90 @@
+.card {
+  display: grid;
+  grid-template-columns: 3px 1fr;
+  border-bottom: 1px solid var(--line);
+}
+
+.card:last-child {
+  border-bottom: none;
+}
+
+.stripe {
+  background: var(--ink-faint);
+}
+
+.info .stripe {
+  background: var(--mint);
+}
+
+.warn .stripe {
+  background: var(--warn);
+}
+
+.critical .stripe {
+  background: var(--danger);
+}
+
+.body {
+  padding: 0.9rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badge {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.18em 0.5em;
+  border-radius: 4px;
+  background: var(--bg-sunken);
+  color: var(--ink-soft);
+}
+
+.info .badge {
+  background: var(--mint-subtle);
+  color: var(--mint-ink);
+}
+
+.warn .badge {
+  background: var(--warn-subtle);
+  color: var(--warn);
+}
+
+.critical .badge {
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+
+.sev {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--danger);
+}
+
+.title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+/* A evidencia e mono: sao numeros, e numeros pedem mono. */
+.evidence {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

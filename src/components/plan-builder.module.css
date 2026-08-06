@@ -1,0 +1,235 @@
+.wrap {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.hint {
+  font-size: 0.74rem;
+  color: var(--ink-faint);
+}
+
+.form {
+  display: flex;
+  gap: 0.6rem;
+  padding: 1.2rem;
+}
+
+.inputWrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding-left: 0.8rem;
+  transition: border-color 0.15s ease;
+}
+
+.inputWrap:focus-within {
+  border-color: var(--brand);
+}
+
+.prefix {
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.92rem;
+  padding: 0.65rem 0.9rem 0.65rem 0.4rem;
+  background: none;
+  border: none;
+  color: var(--ink);
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--ink-faint);
+}
+
+.btn {
+  font-weight: 700;
+  font-size: 0.86rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: var(--brand-ink);
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--brand-hover);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btnGhost {
+  font-weight: 600;
+  font-size: 0.86rem;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+}
+
+.btnGhost:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.error {
+  margin: 0 1.2rem 1.2rem;
+  font-size: 0.84rem;
+  color: var(--danger);
+  background: var(--danger-subtle);
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+}
+
+.proposal {
+  border-top: 1px solid var(--line);
+}
+
+.verdict {
+  padding: 1rem 1.2rem;
+  background: var(--bg-sunken);
+}
+
+.reached {
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.notReached {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.8rem 1.2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+/* A dor se le pela cor E pelo texto: nunca depende so da cor. */
+.pain {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2em 0.5em;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.p1 {
+  background: var(--ok-subtle);
+  color: var(--ok);
+}
+
+.p2 {
+  background: var(--mint-subtle);
+  color: var(--mint-ink);
+}
+
+.p3 {
+  background: var(--bg-sunken);
+  color: var(--ink-soft);
+}
+
+.p4 {
+  background: var(--warn-subtle);
+  color: var(--warn);
+}
+
+.p5 {
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+
+.itemBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.itemLabel {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.reason {
+  font-size: 0.74rem;
+  color: var(--ink-faint);
+}
+
+.amounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+}
+
+.saving {
+  font-size: 0.86rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.annual {
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 1.2rem;
+  border-top: 1px solid var(--line);
+}
