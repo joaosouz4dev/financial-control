@@ -124,6 +124,31 @@ function cellText(cell: ExcelJS.Cell): string {
   return String(v).trim()
 }
 
+/**
+ * Le o dia de pagamento/vencimento respeitando a era da planilha.
+ *
+ * 2025/2026: a celula ja e o dia do mes (numero). 2022/2023: e uma DATA
+ * (datetime), e o dia sai de getDate(). Ler a data como numero daria o serial
+ * do Excel (ex 45000), que viraria uma data absurda.
+ */
+function readDay(row: ExcelJS.Row, col: number, kind: 'day' | 'date'): number | null {
+  if (col === 0) return null
+  const cell = row.getCell(col)
+  const v = cell.value
+  if (v === null || v === undefined || v === '') return null
+
+  if (kind === 'date') {
+    if (v instanceof Date) return v.getUTCDate()
+    // Formula/resultado que resolve para data.
+    if (typeof v === 'object' && 'result' in v && (v as any).result instanceof Date) {
+      return ((v as any).result as Date).getUTCDate()
+    }
+    return null
+  }
+
+  return cellNumber(cell)
+}
+
 function cellNumber(cell: ExcelJS.Cell): number | null {
   const v = cell.value
   if (typeof v === 'number') return v
@@ -153,10 +178,37 @@ interface Layout {
   income: { amount: number; desc: number; paid: number; due: number } | null
   goals: { cat: number; pct: number } | null
   headerRow: number
+  /**
+   * Como ler a coluna "paid": em 2022/2023 e uma DATA (datetime), em 2025/2026
+   * e o DIA do mes (numero). O parser precisa saber qual, senao le a data como
+   * dia 45000 (serial do Excel).
+   */
+  paidKind: 'day' | 'date'
 }
 
+/**
+ * O layout mudou 3 vezes em 4 anos. Detecta a era pelos cabecalhos.
+ *
+ * - 2026: "CONTROLE DE DESPESAS" / "CONTROLE DE RECEITAS" (o formato atual).
+ * - 2025: "Despesas" + "Receita", com Pagamento/Vencimento como dia do mes.
+ * - 2023: "Despesas" + "Categorias" + "Renda Extra", data como datetime.
+ * - 2022: "Despesas" + "Renda Extra", sem categoria, data como datetime.
+ *
+ * A funcao tenta o formato novo primeiro (detectModern) e cai nos antigos
+ * (detectLegacy) so quando o novo nao casa.
+ */
 function detectLayout(ws: ExcelJS.Worksheet): Layout {
-  const layout: Layout = { expense: null, income: null, goals: null, headerRow: 1 }
+  return detectModern(ws) ?? detectLegacy(ws)
+}
+
+function detectModern(ws: ExcelJS.Worksheet): Layout | null {
+  const layout: Layout = {
+    expense: null,
+    income: null,
+    goals: null,
+    headerRow: 1,
+    paidKind: 'day',
+  }
 
   for (let r = 1; r <= Math.min(10, ws.rowCount); r++) {
     const row = ws.getRow(r)
@@ -227,11 +279,122 @@ function detectLayout(ws: ExcelJS.Worksheet): Layout {
         }
         if (!layout.goals) layout.goals = { cat: goalCol, pct: goalCol + 1 }
       }
-      break
+      return layout
+    }
+  }
+
+  return null
+}
+
+/**
+ * Formatos antigos (2022-2025). O titulo e "Despesas" (nao "CONTROLE DE
+ * DESPESAS"), e a estrutura varia. Ancora no cabecalho "Despesas" e detecta as
+ * colunas ao redor pela presenca de "Categorias" e pelo tipo da coluna de data.
+ */
+function detectLegacy(ws: ExcelJS.Worksheet): Layout {
+  const layout: Layout = {
+    expense: null,
+    income: null,
+    goals: null,
+    headerRow: 1,
+    paidKind: 'date',
+  }
+
+  const header = ws.getRow(1)
+  let despCol = 0
+  let rendaCol = 0 // "Renda Extra" (2022/2023) ou "Receita" (2025)
+  let catCol = 0
+  let objetivoCol = 0
+
+  header.eachCell({ includeEmpty: false }, (cell, col) => {
+    const t = norm(cellText(cell))
+    if (!despCol && t === 'DESPESAS') despCol = col
+    if (!rendaCol && (t === 'RENDA EXTRA' || t === 'RECEITA')) rendaCol = col
+    if (!catCol && (t === 'CATEGORIAS' || t === 'CATEGORIA')) catCol = col
+    if (!objetivoCol && t === 'OBJETIVO') objetivoCol = col
+  })
+
+  if (!despCol) {
+    throw new Error(
+      `nao reconheci o layout: nem "CONTROLE DE DESPESAS" (novo) nem "Despesas" (antigo)`,
+    )
+  }
+
+  // 2025 tem Pagamento/Vencimento como colunas proprias (dia do mes).
+  const paidHdr = colOfIn(header, ['PAGAMENTO'], despCol, 6)
+  const dueHdr = colOfIn(header, ['VENCIMENTO'], despCol, 6)
+  const is2025 = paidHdr !== null && dueHdr !== null
+
+  if (is2025) {
+    // A=valor B=desc C=Pagamento(dia) D=Vencimento(dia) E=Categorias
+    layout.paidKind = 'day'
+    layout.expense = {
+      amount: despCol,
+      desc: despCol + 1,
+      paid: paidHdr!,
+      due: dueHdr!,
+      cat: catCol || despCol + 4,
+    }
+    if (rendaCol) {
+      const ipaid = colOfIn(header, ['PAGAMENTO'], rendaCol, 5)
+      const idue = colOfIn(header, ['VENCIMENTO'], rendaCol, 5)
+      layout.income = {
+        amount: rendaCol,
+        desc: rendaCol + 1,
+        paid: ipaid ?? rendaCol + 2,
+        due: idue ?? rendaCol + 3,
+      }
+    }
+  } else {
+    // 2022/2023: A=valor B=desc C=data(datetime) [D=Categorias em 2023]
+    layout.paidKind = 'date'
+    layout.expense = {
+      amount: despCol,
+      desc: despCol + 1,
+      paid: despCol + 2, // coluna de data
+      due: despCol + 2, // sem vencimento separado: usa a mesma data
+      cat: catCol || 0, // 2022 nao tem categoria; 0 = ignora
+    }
+    if (rendaCol) {
+      // Renda extra: valor + descricao, sem data de pagamento estruturada.
+      layout.income = {
+        amount: rendaCol,
+        desc: rendaCol + 1,
+        paid: 0,
+        due: 0,
+      }
+    }
+  }
+
+  // Metas: bloco Objetivo com cabecalho "%" nas linhas seguintes.
+  if (objetivoCol) {
+    for (let gr = 1; gr <= Math.min(3, ws.rowCount); gr++) {
+      const grow = ws.getRow(gr)
+      for (let c = objetivoCol; c < objetivoCol + 5; c++) {
+        if (norm(cellText(grow.getCell(c))) === '%') {
+          layout.goals = { cat: c - 1, pct: c }
+          break
+        }
+      }
+      if (layout.goals) break
     }
   }
 
   return layout
+}
+
+/** Acha a coluna cujo cabecalho bate um dos labels, numa janela. */
+function colOfIn(
+  row: ExcelJS.Row,
+  labels: string[],
+  from: number,
+  span: number,
+): number | null {
+  for (let c = from; c < from + span; c++) {
+    const t = norm(cellText(row.getCell(c)))
+    if (labels.some((l) => t === l)) return c
+  }
+  return null
 }
 
 export async function parseWorkbook(filePath: string, filename: string): Promise<ParsedSheet> {
@@ -269,9 +432,10 @@ export async function parseWorkbook(filePath: string, filename: string): Promise
             amountCents: cents,
             amountExpression: expression,
             description: desc,
-            categoryRaw: cellText(row.getCell(layout.expense.cat)) || null,
-            paidDay: cellNumber(row.getCell(layout.expense.paid)),
-            dueDay: cellNumber(row.getCell(layout.expense.due)),
+            // cat=0 significa "esta era nao tem categoria" (2022).
+            categoryRaw: layout.expense.cat > 0 ? cellText(row.getCell(layout.expense.cat)) || null : null,
+            paidDay: readDay(row, layout.expense.paid, layout.paidKind),
+            dueDay: readDay(row, layout.expense.due, layout.paidKind),
             row: r,
             installment: parseInstallment(desc),
           })
@@ -299,8 +463,8 @@ export async function parseWorkbook(filePath: string, filename: string): Promise
             amountExpression: expression,
             description: desc,
             categoryRaw: null,
-            paidDay: cellNumber(row.getCell(layout.income.paid)),
-            dueDay: cellNumber(row.getCell(layout.income.due)),
+            paidDay: readDay(row, layout.income.paid, layout.paidKind),
+            dueDay: readDay(row, layout.income.due, layout.paidKind),
             row: r,
             installment: parseInstallment(desc),
           })

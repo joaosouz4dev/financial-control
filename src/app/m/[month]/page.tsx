@@ -10,6 +10,8 @@ import { MonthNav } from '@/components/month-nav'
 import { QuickEntry } from '@/components/quick-entry'
 import { CashflowChart } from '@/components/cashflow-chart'
 import { MonthSummaryCard } from '@/components/month-summary-card'
+import { LedgerTable } from '@/components/ledger-table'
+import { getLedger } from '@/lib/ledger'
 import { getFlowItems, getOpeningBalance } from '@/lib/cashflow/queries'
 import { projectCashflow, upcomingCommitments } from '@/lib/cashflow/project'
 import { narrateInsights, type Summary } from '@/lib/insights/narrate'
@@ -50,9 +52,10 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
   // Fluxo de caixa: o total do mes pode fechar positivo e o saldo mergulhar no
   // dia 12. A planilha nunca mostrou isso.
   const { from, to } = monthRange(month)
-  const [flowItems, opening] = await Promise.all([
+  const [flowItems, opening, ledger] = await Promise.all([
     getFlowItems(from, to),
     getOpeningBalance(from),
+    getLedger(month),
   ])
   const projection = projectCashflow(flowItems, opening, from, to)
 
@@ -128,6 +131,10 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
         )}
 
         <QuickEntry />
+
+        <section aria-label="Lançamentos do mês">
+          <LedgerTable ledger={ledger} />
+        </section>
 
         <div className={styles.columns}>
           <div className={styles.colMain}>

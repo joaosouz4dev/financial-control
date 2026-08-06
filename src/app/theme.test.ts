@@ -142,3 +142,25 @@ describe('paleta de gráfico', () => {
     }
   })
 })
+
+describe('paleta da tabela de lançamentos', () => {
+  /**
+   * A linguagem de cor da planilha (despesa vermelha, receita verde) usada
+   * como texto de titulo: precisa passar contraste WCAG AA. As cores exatas da
+   * planilha (E06666/93C47D) reprovam no claro, por isso ha tokens por tema.
+   */
+  it.each([
+    ['claro', 'light'],
+    ['escuro', 'dark'],
+  ])('despesa e receita têm contraste de texto no tema %s', (_n, key) => {
+    const t = key === 'light' ? light : dark
+    expect(contrast(t['--ledger-expense']!, t['--bg-elevated']!)).toBeGreaterThanOrEqual(AA_TEXT)
+    expect(contrast(t['--ledger-income']!, t['--bg-elevated']!)).toBeGreaterThanOrEqual(AA_TEXT)
+  })
+
+  it('despesa e receita são distinguíveis (não só pela cor: há ✓/○ e faixa)', () => {
+    for (const t of [light, dark]) {
+      expect(t['--ledger-expense']).not.toBe(t['--ledger-income'])
+    }
+  })
+})

@@ -37,6 +37,12 @@
   --chart-line: #6d28d9;
   --chart-alert: #e11d48;
 
+  /* Tabela de lancamentos: a linguagem de cor da planilha (despesa vermelha,
+     receita verde). As cores exatas da planilha (E06666/93C47D) reprovam como
+     texto no claro, entao usa tons mais escuros aqui e mais claros no escuro. */
+  --ledger-expense: #c0392b;
+  --ledger-income: #15794a;
+
   --radius: 14px;
   --radius-sm: 9px;
   --radius-pill: 999px;
@@ -79,6 +85,8 @@
        grafico: L 0.719 acima do limite. #f43f5e passa. */
     --chart-line: #8b5cf6;
     --chart-alert: #f43f5e;
+    --ledger-expense: #f87171;
+    --ledger-income: #4ade80;
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow: 0 4px 16px -4px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.3);
@@ -111,6 +119,8 @@
   --line-strong: #3d3457;
   --chart-line: #8b5cf6;
   --chart-alert: #f43f5e;
+  --ledger-expense: #f87171;
+  --ledger-income: #4ade80;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow: 0 4px 16px -4px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.3);
   --shadow-lg: 0 24px 48px -12px rgb(0 0 0 / 0.6);
@@ -140,6 +150,8 @@
   --line-strong: #d5d0e4;
   --chart-line: #6d28d9;
   --chart-alert: #e11d48;
+  --ledger-expense: #c0392b;
+  --ledger-income: #15794a;
   --shadow-sm: 0 1px 2px rgb(22 18 31 / 0.06);
   --shadow: 0 4px 16px -4px rgb(22 18 31 / 0.1), 0 1px 3px rgb(22 18 31 / 0.05);
   --shadow-lg: 0 24px 48px -12px rgb(22 18 31 / 0.18);
