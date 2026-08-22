@@ -18,6 +18,13 @@ import styles from './cashflow-chart.module.css'
  *
  * O hover mostra a data e o que moveu naquele dia: a curva diz que caiu, o
  * tooltip diz o que derrubou. Sem isso o mergulho e um mistero.
+ *
+ * O eixo X e o mes inteiro, dia 1 a ultimo dia, porque projectCashflow entrega
+ * todos os dias. Antes so os dias com lancamento entravam na serie e o X saia
+ * do indice: a curva era esticada ate as bordas e a distancia entre dois
+ * pontos nao dizia quantos dias passaram. Um pulo de 5 dias parados ocupava a
+ * mesma largura que um de 1 dia, e a inclinacao deixava de significar
+ * velocidade de queda.
  */
 export function CashflowChart({ projection }: { projection: Projection }) {
   const { days } = projection
@@ -50,12 +57,21 @@ export function CashflowChart({ projection }: { projection: Projection }) {
   const negative = projection.firstNegative !== null
   const last = days.at(-1)!
   const active = hover !== null ? days[hover] : null
+  const inferidos = active?.items.filter((i) => i.dateInferred).length ?? 0
 
-  // Marcas de data no eixo: primeiro dia, ultimo e alguns no meio, sem colidir.
-  const step = Math.max(1, Math.ceil(days.length / 6))
+  // Marcas de data no eixo: dias redondos do calendario (1, 5, 10, ...) mais o
+  // ultimo. Ancorar no dia e nao no indice mantem a regua legivel e estavel
+  // entre meses de 28 e 31 dias.
+  const step = days.length > 20 ? 5 : days.length > 10 ? 3 : 1
   const ticks = days
-    .map((d, i) => ({ i, date: d.date }))
-    .filter((t) => t.i % step === 0 || t.i === days.length - 1)
+    .map((d, i) => ({ i, date: d.date, dia: Number(d.date.slice(8)) }))
+    .filter((t) => t.dia === 1 || t.dia % step === 0 || t.i === days.length - 1)
+    // O ultimo dia do mes pode encostar na marca anterior (30 e 31): descarta
+    // a penultima quando elas ficariam sobrepostas.
+    .filter((t, i, arr) => {
+      const next = arr[i + 1]
+      return !next || next.i - t.i > 1
+    })
 
 
   const label = negative
@@ -88,7 +104,9 @@ export function CashflowChart({ projection }: { projection: Projection }) {
 
         {/* Dia negativo: anel na cor da superficie separa o ponto da linha. */}
         {days.map((d, i) =>
-          d.balanceCents < 0 ? (
+          // So o dia que MOVEU ganha marca: com o mes inteiro na serie, marcar
+          // todo dia negativo desenharia uma fileira continua de bolinhas.
+          d.balanceCents < 0 && d.items.length > 0 ? (
             <circle key={d.date} cx={x(i)} cy={y(d.balanceCents)} r="4" className={styles.dotNeg} />
           ) : null,
         )}
@@ -141,11 +159,20 @@ export function CashflowChart({ projection }: { projection: Projection }) {
           <span className={`${styles.ttBalance} ${active.balanceCents < 0 ? styles.ttNeg : ''} tnum`}>
             saldo {formatBRL(active.balanceCents)}
           </span>
+          {inferidos > 0 && (
+            <span className={styles.ttWarn}>
+              {inferidos} {inferidos === 1 ? 'previsão sem' : 'previsões sem'} dia de vencimento
+              {inferidos === 1 ? ' definido, caiu' : ' definido, caíram'} aqui por padrão
+            </span>
+          )}
           {active.items.length > 0 && (
             <ul className={styles.ttItems}>
               {active.items.slice(0, 5).map((it, k) => (
                 <li key={`${it.label}-${k}`} className={styles.ttItem}>
-                  <span className={styles.ttLabel}>{it.label}</span>
+                  <span className={styles.ttLabel}>
+                    {it.label}
+                    {it.dateInferred && <span className={styles.ttInferred} title="data inferida">~</span>}
+                  </span>
                   <span
                     className={`${styles.ttAmount} ${it.direction === 'in' ? styles.ttIn : styles.ttOut} tnum`}
                   >

@@ -22,11 +22,18 @@ describe('projectCashflow', () => {
       '2026-07-31',
     )
 
-    expect(p.days.map((d) => [d.date, d.balanceCents])).toEqual([
-      ['2026-07-05', 400000],
-      ['2026-07-12', 250000],
-      ['2026-07-20', 65000],
-    ])
+    // A serie cobre o mes inteiro; dia sem movimento carrega o saldo anterior.
+    expect(p.days).toHaveLength(31)
+    expect(p.days[0]!.date).toBe('2026-07-01')
+    expect(p.days.at(-1)!.date).toBe('2026-07-31')
+
+    const saldoEm = (date: string) => p.days.find((d) => d.date === date)!.balanceCents
+    expect(saldoEm('2026-07-04')).toBe(0)
+    expect(saldoEm('2026-07-05')).toBe(400000)
+    expect(saldoEm('2026-07-11')).toBe(400000)
+    expect(saldoEm('2026-07-12')).toBe(250000)
+    expect(saldoEm('2026-07-20')).toBe(65000)
+    expect(saldoEm('2026-07-31')).toBe(65000)
     expect(p.closingBalanceCents).toBe(65000)
     expect(p.totalInCents).toBe(400000)
     expect(p.totalOutCents).toBe(335000)
@@ -80,9 +87,10 @@ describe('projectCashflow', () => {
       '2026-07-31',
     )
     expect(p.firstNegative).toBeNull()
-    expect(p.days[0]!.balanceCents).toBe(0)
+    const dia10 = p.days.find((d) => d.date === '2026-07-10')!
+    expect(dia10.balanceCents).toBe(0)
     // A ordem dentro do dia: entrada primeiro.
-    expect(p.days[0]!.items[0]!.direction).toBe('in')
+    expect(dia10.items[0]!.direction).toBe('in')
   })
 
   it('ignora o que está fora da janela', () => {
@@ -96,16 +104,26 @@ describe('projectCashflow', () => {
       '2026-07-01',
       '2026-07-31',
     )
-    expect(p.days).toHaveLength(1)
+    // O mes inteiro entra na serie, mas so o item de julho move o saldo.
+    expect(p.days).toHaveLength(31)
+    expect(p.days.flatMap((d) => d.items)).toHaveLength(1)
+    expect(p.days.find((d) => d.date === '2026-07-10')!.items).toHaveLength(1)
     expect(p.closingBalanceCents).toBe(5000)
   })
 
-  it('lida com janela vazia', () => {
+  it('mês sem movimento vira linha plana, não série vazia', () => {
     const p = projectCashflow([], 50000, '2026-07-01', '2026-07-31')
-    expect(p.days).toEqual([])
+    expect(p.days).toHaveLength(31)
+    expect(p.days.every((d) => d.balanceCents === 50000)).toBe(true)
+    expect(p.days.every((d) => d.items.length === 0)).toBe(true)
     expect(p.closingBalanceCents).toBe(50000)
-    expect(p.trough).toBeNull()
+    expect(p.trough?.balanceCents).toBe(50000)
     expect(p.firstNegative).toBeNull()
+  })
+
+  it('não gira infinito se a janela vier invertida', () => {
+    const p = projectCashflow([], 0, '2026-07-31', '2026-07-01')
+    expect(p.days).toEqual([])
   })
 })
 

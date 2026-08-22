@@ -154,3 +154,18 @@
   color: var(--ink-faint);
   font-size: 0.7rem;
 }
+
+/* Previsao sem dia de vencimento: a data e palpite, e o tooltip precisa dizer
+   isso. Sem o aviso, um empilhamento no dia 1 se le como compromisso real. */
+.ttWarn {
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  line-height: 1.3;
+  padding-bottom: 0.15rem;
+}
+
+.ttInferred {
+  color: var(--ink-faint);
+  margin-left: 0.25em;
+  cursor: help;
+}
