@@ -159,13 +159,21 @@ export async function importWorkbook(filePath: string, filename: string): Promis
     let ruleId: string | null = null
 
     if (deservesRecurrence(e.description)) {
-      // Casa so por label. O label ja carrega o ordinal, entao os dois cartoes
-      // sao regras distintas e a Netflix continua uma serie unica mesmo com o
-      // valor mudando de 44,90 para 59,90.
+      // Casa so por label, normalizado. O label ja carrega o ordinal, entao os
+      // dois cartoes sao regras distintas ('#2' muda a chave) e a Netflix
+      // continua uma serie unica mesmo com o valor mudando de 44,90 para 59,90.
+      // A normalizacao existe porque a planilha alterna a caixa da mesma linha
+      // ('Aparelho Tauana' e 'aparelho tauana'): comparar cru criava uma
+      // segunda regra e dobrava o compromisso na projecao de fluxo de caixa.
       const existing = await db
         .select()
         .from(recurrenceRules)
-        .where(and(eq(recurrenceRules.contextId, ctx.id), eq(recurrenceRules.label, label)))
+        .where(
+          and(
+            eq(recurrenceRules.contextId, ctx.id),
+            sql`lower(trim(${recurrenceRules.label})) = lower(trim(${label}))`,
+          ),
+        )
         .limit(1)
 
       if (existing[0]) {

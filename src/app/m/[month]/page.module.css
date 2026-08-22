@@ -145,15 +145,7 @@
   gap: 1.5rem;
 }
 
-@media (min-width: 940px) {
-  .columns {
-    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
-    align-items: start;
-  }
-}
-
-.colMain,
-.colSide {
+.colMain {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -202,52 +194,6 @@
   padding: 1.2rem;
 }
 
-/* A pagar */
-.upList {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-}
-
-.upItem {
-  display: grid;
-  grid-template-columns: 2rem 1fr auto;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.7rem 1.2rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.upItem:last-child {
-  border-bottom: none;
-}
-
-.upDay {
-  width: 2rem;
-  height: 2rem;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-sm);
-  background: var(--bg-sunken);
-  color: var(--ink-soft);
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.upDesc {
-  font-size: 0.86rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.upValue {
-  font-size: 0.84rem;
-  font-weight: 600;
-}
-
 /* Vazio */
 .empty {
   min-height: 100vh;
@@ -275,12 +221,6 @@
   background: var(--bg-sunken);
   padding: 0.15em 0.4em;
   border-radius: 4px;
-}
-
-.allPaid {
-  padding: 1.2rem;
-  font-size: 0.86rem;
-  color: var(--ink-faint);
 }
 
 .navLink {
