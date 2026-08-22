@@ -18,6 +18,13 @@ export interface FlowItem {
   /** Ja aconteceu (pago/recebido) ou ainda e previsao. */
   settled: boolean
   ruleId: string | null
+  /**
+   * Previsao cuja regra nao tem dia de vencimento: a data e um palpite (o dia
+   * do starts_on), nao um compromisso real. A planilha nao trazia o dia nessas
+   * linhas. Some no dia 1 e nao no dia certo, entao a curva mostra um degrau
+   * que na vida real esta espalhado pelo mes.
+   */
+  dateInferred?: boolean
 }
 
 export interface DayPoint {
@@ -47,6 +54,13 @@ export interface Projection {
  * Ordena por data e acumula. Dentro do mesmo dia, entrada antes de saida:
  * e o comportamento otimista, mas e o realista para salario/vencimento no
  * mesmo dia, e evita alarme falso de negativo que se resolve em horas.
+ *
+ * A serie cobre TODOS os dias de [from, to], inclusive os sem movimento. Antes
+ * so os dias com lancamento entravam, e o grafico plotava por indice: o mes
+ * virava uma regua elastica onde a distancia entre dois pontos nao dizia
+ * quantos dias passaram, e a curva era esticada ate as bordas mesmo quando o
+ * primeiro movimento caia no dia 12. Dia parado e informacao: o saldo fica
+ * onde estava.
  */
 export function projectCashflow(
   items: FlowItem[],
@@ -63,14 +77,13 @@ export function projectCashflow(
     byDate.set(i.date, arr)
   }
 
-  const dates = [...byDate.keys()].sort()
   const days: DayPoint[] = []
   let balance = openingBalanceCents
   let totalIn = 0
   let totalOut = 0
 
-  for (const date of dates) {
-    const dayItems = byDate.get(date)!
+  for (const date of eachDay(from, to)) {
+    const dayItems = byDate.get(date) ?? []
     // Entrada antes de saida no mesmo dia.
     dayItems.sort((a, b) => (a.direction === b.direction ? 0 : a.direction === 'in' ? -1 : 1))
 
@@ -169,6 +182,19 @@ export function upcomingCommitments(items: FlowItem[], today: string, days = 14)
   return items
     .filter((i) => !i.settled && i.direction === 'out' && i.date >= today && i.date <= limit)
     .sort((a, b) => a.date.localeCompare(b.date) || b.amountCents - a.amountCents)
+}
+
+/** Todos os dias do intervalo, inclusive os extremos. */
+function eachDay(from: string, to: string): string[] {
+  const out: string[] = []
+  let cur = from
+  // Guarda contra intervalo invertido ou datas malformadas: sem isto um
+  // `to` menor que `from` giraria para sempre.
+  for (let i = 0; cur <= to && i < 400; i++) {
+    out.push(cur)
+    cur = addDays(cur, 1)
+  }
+  return out
 }
 
 function addDays(iso: string, n: number): string {
