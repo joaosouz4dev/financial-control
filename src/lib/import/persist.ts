@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 import { db } from '@/db'
 import {
   transactions,
@@ -12,6 +12,7 @@ import {
 } from '@/db/schema'
 import { parseWorkbook, type ParsedEntry, type ParsedSheet } from './xlsx'
 import { deservesRecurrence } from '../classify'
+import { selectStaleRules } from '../recurrence/retire'
 
 /**
  * Persiste uma planilha no banco.
@@ -27,6 +28,8 @@ export interface ImportResult {
   inserted: number
   skipped: number
   rulesCreated: number
+  /** Regras que pararam de acontecer e foram encerradas neste import. */
+  rulesRetired: number
   warnings: number
 }
 
@@ -226,12 +229,65 @@ export async function importWorkbook(filePath: string, filename: string): Promis
     inserted++
   }
 
+  // O import cria regra com folga (quase tudo merece uma), entao ele tambem
+  // precisa fechar a conta: sem isso, todo lancamento avulso vira previsao
+  // eterna e o mes futuro enche de coisa que aconteceu uma vez, anos atras.
+  const rulesRetired = await retireStaleRules(ctx.id, periodEndISO(periodLabel))
+
   return {
     filename,
     period: periodLabel,
     inserted,
     skipped,
     rulesCreated,
+    rulesRetired,
     warnings: parsed.warnings.length,
   }
+}
+
+/** Ultimo dia do periodo importado: o "hoje" da decisao de encerramento. */
+function periodEndISO(periodLabel: string): string {
+  const [m, y] = periodLabel.split('/').map(Number) as [number, number]
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return `${y}-${String(m).padStart(2, '0')}-${last}`
+}
+
+/**
+ * Encerra regras que pararam de aparecer e limpa as previsoes que elas ja
+ * tinham gerado adiante. Nao apaga regra nem transacao: ends_on preserva o
+ * historico e deixa a regra pronta caso o lancamento volte.
+ */
+async function retireStaleRules(contextId: string, today: string): Promise<number> {
+  const rows = await db
+    .select({
+      id: recurrenceRules.id,
+      startsOn: recurrenceRules.startsOn,
+      lastSeen: sql<string | null>`(
+        select max(t.due_date)::text from ${transactions} t where t.rule_id = ${recurrenceRules.id}
+      )`,
+    })
+    .from(recurrenceRules)
+    .where(and(eq(recurrenceRules.contextId, contextId), isNull(recurrenceRules.endsOn)))
+
+  const stale = selectStaleRules(rows, today)
+
+  for (const r of stale) {
+    await db
+      .update(recurrenceRules)
+      .set({ endsOn: r.endsOn, active: false })
+      .where(eq(recurrenceRules.id, r.id))
+
+    await db
+      .delete(recurrenceOccurrences)
+      .where(
+        and(
+          eq(recurrenceOccurrences.ruleId, r.id),
+          sql`${recurrenceOccurrences.dueDate} > ${r.endsOn}`,
+          isNull(recurrenceOccurrences.transactionId),
+          isNull(recurrenceOccurrences.skippedAt),
+        ),
+      )
+  }
+
+  return stale.length
 }
