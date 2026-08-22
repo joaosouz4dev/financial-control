@@ -19,7 +19,7 @@ dayjs.extend(utc)
 dayjs.extend(timezone)
 import { getLedger } from '@/lib/ledger'
 import { getFlowItems, getOpeningBalance } from '@/lib/cashflow/queries'
-import { projectCashflow, upcomingCommitments } from '@/lib/cashflow/project'
+import { projectCashflow } from '@/lib/cashflow/project'
 import { narrateInsights, type Summary } from '@/lib/insights/narrate'
 import { monthRange } from '@/lib/queries'
 import Link from 'next/link'
@@ -67,7 +67,6 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
 
   const narrated = await narrateSafely(month, insights, projection)
 
-  const upcoming = upcomingCommitments(flowItems, from, 31).slice(0, 10)
 
   return (
     <div className={styles.shell}>
@@ -162,28 +161,6 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
               </div>
             </section>
           </div>
-
-          <aside className={styles.colSide}>
-            <section className={styles.panel} aria-labelledby="up-h">
-              <div className={styles.panelHead}>
-                <h2 id="up-h" className={styles.panelTitle}>A pagar</h2>
-                <span className={styles.panelHint}>{upcoming.length} em aberto</span>
-              </div>
-              {upcoming.length === 0 ? (
-                <p className={styles.allPaid}>Tudo pago neste mês.</p>
-              ) : (
-                <ul className={styles.upList}>
-                  {upcoming.map((t) => (
-                    <li key={`${t.date}-${t.label}`} className={styles.upItem}>
-                      <span className={styles.upDay} aria-hidden>{t.date.slice(8, 10)}</span>
-                      <span className={styles.upDesc}>{t.label}</span>
-                      <span className={`${styles.upValue} tnum`}>{formatBRL(t.amountCents)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </aside>
         </div>
       </main>
     </div>
