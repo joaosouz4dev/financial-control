@@ -64,6 +64,7 @@ export async function getFlowItems(
       kind: recurrenceRules.kind,
       ruleId: recurrenceRules.id,
       installmentTotal: recurrenceRules.installmentTotal,
+      dayOfMonth: recurrenceRules.dayOfMonth,
     })
     .from(recurrenceOccurrences)
     .innerJoin(recurrenceRules, eq(recurrenceRules.id, recurrenceOccurrences.ruleId))
@@ -88,6 +89,9 @@ export async function getFlowItems(
     direction: o.kind === 'income' ? 'in' : 'out',
     settled: false,
     ruleId: o.ruleId,
+    // Sem dia de vencimento na regra, o gerador cai no dia do starts_on. Marca
+    // para a UI poder dizer que a data e inferida em vez de afirmar um dia.
+    dateInferred: o.dayOfMonth === null,
   }))
 
   return [...fromTx, ...fromOcc].sort((a, b) => a.date.localeCompare(b.date))
