@@ -26,7 +26,14 @@ import styles from './cashflow-chart.module.css'
  * mesma largura que um de 1 dia, e a inclinacao deixava de significar
  * velocidade de queda.
  */
-export function CashflowChart({ projection }: { projection: Projection }) {
+export function CashflowChart({
+  projection,
+  today,
+}: {
+  projection: Projection
+  /** YYYY-MM-DD no fuso do Joao. Separa o que aconteceu do que e projecao. */
+  today: string
+}) {
   const { days } = projection
   const [hover, setHover] = useState<number | null>(null)
 
@@ -51,6 +58,27 @@ export function CashflowChart({ projection }: { projection: Projection }) {
   const line = days
     .map((d, i) => `${i === 0 ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(d.balanceCents).toFixed(1)}`)
     .join(' ')
+
+  /* Onde o passado termina e a projecao comeca.
+   *
+   * O grafico desenhava tudo com a mesma linha solida: no dia 1 do mes, os 29
+   * dias seguintes pareciam fato consumado. O trecho previsto agora e
+   * tracejado, e uma linha marca o hoje. */
+  const idxHoje = days.findIndex((d) => d.date > today)
+  const corte = idxHoje === -1 ? days.length - 1 : Math.max(0, idxHoje - 1)
+  const temFuturo = idxHoje !== -1
+
+  const linhaPassado = days
+    .slice(0, corte + 1)
+    .map((d, i) => `${i === 0 ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(d.balanceCents).toFixed(1)}`)
+    .join(' ')
+
+  const linhaFuturo = temFuturo
+    ? days
+        .slice(corte)
+        .map((d, i) => `${i === 0 ? 'M' : 'L'} ${x(corte + i).toFixed(1)} ${y(d.balanceCents).toFixed(1)}`)
+        .join(' ')
+    : ''
   const area = `${line} L ${x(days.length - 1).toFixed(1)} ${y(min).toFixed(1)} L ${x(0).toFixed(1)} ${y(min).toFixed(1)} Z`
   const zeroY = y(0)
 
@@ -100,7 +128,25 @@ export function CashflowChart({ projection }: { projection: Projection }) {
         {/* O zero e a unica referencia que importa aqui. */}
         {min < 0 && <line x1="0" y1={zeroY} x2={W} y2={zeroY} className={styles.zero} />}
 
-        <path d={line} className={styles.line} fill="none" />
+        {/* Realizado: linha solida. Projecao: tracejada, porque ainda nao
+            aconteceu e nao deve ser lida como fato. */}
+        <path d={linhaPassado} className={styles.line} fill="none" />
+        {temFuturo && <path d={linhaFuturo} className={styles.lineFuture} fill="none" />}
+
+        {temFuturo && corte >= 0 && (
+          <>
+            <line
+              x1={x(corte)}
+              y1={PAD}
+              x2={x(corte)}
+              y2={H - BOTTOM}
+              className={styles.todayLine}
+            />
+            <text x={x(corte)} y={PAD - 1} className={styles.todayLabel} textAnchor="middle">
+              hoje
+            </text>
+          </>
+        )}
 
         {/* Dia negativo: anel na cor da superficie separa o ponto da linha. */}
         {days.map((d, i) =>

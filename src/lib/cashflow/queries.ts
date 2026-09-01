@@ -79,7 +79,20 @@ export async function getFlowItems(
       ),
     )
 
-  const fromOcc: FlowItem[] = occ.map((o) => ({
+  /* Segunda barreira contra dupla contagem.
+   *
+   * A primeira e o `transaction_id` na ocorrencia. Mas basta uma previsao ficar
+   * solta (regra que mudou de nome, mes aberto antes desta correcao) para o
+   * mesmo dinheiro ser somado duas vezes: uma como lancamento, outra como
+   * previsao. Aqui a regra e simples: se ja existe lancamento daquela regra no
+   * periodo, a previsao dela nao entra. O que esta lancado ganha do previsto. */
+  const regrasJaLancadas = new Set(
+    txs.map((t) => t.ruleId).filter((r): r is string => r !== null),
+  )
+
+  const fromOcc: FlowItem[] = occ
+    .filter((o) => !regrasJaLancadas.has(o.ruleId))
+    .map((o) => ({
     date: o.dueDate,
     label:
       o.installmentNo && o.installmentTotal

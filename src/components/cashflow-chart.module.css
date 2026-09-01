@@ -169,3 +169,26 @@
   margin-left: 0.25em;
   cursor: help;
 }
+
+/* Projecao: mesma cor, tracejada. Nao aconteceu ainda. */
+.lineFuture {
+  stroke: var(--chart-line);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 5 4;
+  opacity: 0.75;
+}
+
+/* A marca do hoje e cromo, nao dado: recessiva. */
+.todayLine {
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.todayLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--ink-faint);
+}
