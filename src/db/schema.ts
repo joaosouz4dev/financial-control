@@ -537,3 +537,34 @@ export const chatMessages = pgTable(
   },
   (t) => [index('chat_messages_context_created_idx').on(t.contextId, t.createdAt)],
 )
+
+// ---------------------------------------------------------------------------
+// Historico de mudancas de um lancamento
+// ---------------------------------------------------------------------------
+
+/**
+ * Cada mudanca vira uma linha, nunca uma sobrescrita.
+ *
+ * `updatedAt` na transacao guarda so a ultima alteracao e apaga a anterior:
+ * nao responde "quando eu marquei isso como pago?" nem "esse valor sempre foi
+ * esse?". Aqui a resposta e append-only, entao a trilha e completa.
+ *
+ * `onDelete: cascade`: apagar o lancamento leva o historico junto. Manter
+ * evento orfao de algo que nao existe mais nao ajuda ninguem a entender nada.
+ */
+export const transactionEvents = pgTable(
+  'transaction_events',
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    transactionId: uuid()
+      .notNull()
+      .references(() => transactions.id, { onDelete: 'cascade' }),
+    /** 'created' | 'paid' | 'unpaid' | 'amount' | 'description' | 'due_date' | 'category' */
+    kind: text().notNull(),
+    /** Valor anterior e novo, ja em texto legivel. Null no 'created'. */
+    fromValue: text(),
+    toValue: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('transaction_events_tx_created_idx').on(t.transactionId, t.createdAt)],
+)

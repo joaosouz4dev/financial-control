@@ -1,38 +1,46 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import type { LedgerRow } from '@/lib/ledger'
 import styles from './paid-toggle.module.css'
 
 /**
  * Marca pago / nao pago em um clique.
  *
  * Abrir o editor inteiro so para marcar um pagamento e atrito demais: e a
- * acao mais frequente do mes. O estado troca na hora (otimista) e reverte se
- * o servidor recusar.
+ * acao mais frequente do mes.
+ *
+ * O estado otimista nao vive mais aqui dentro: ele sobe para a tabela via
+ * `applyLocal`. Enquanto morava neste componente, o botao trocava na hora mas
+ * a linha (fundo, faixa da esquerda) so mudava quando o refresh do servidor
+ * voltava, e a troca parecia meio feita.
  */
 export function PaidToggle({
   id,
   paid,
   dueDate,
   label,
+  applyLocal,
+  clearLocal,
 }: {
   id: string
   paid: boolean
   /** YYYY-MM-DD do vencimento: vira a data de pagamento ao marcar. */
   dueDate: string
   label: string
+  applyLocal: (id: string, patch: Partial<LedgerRow>) => void
+  clearLocal: (id: string) => void
 }) {
   const router = useRouter()
-  const [optimistic, setOptimistic] = useState(paid)
   const [pending, startTransition] = useTransition()
 
   async function toggle(e: React.MouseEvent) {
     // Nao deixa o clique abrir o editor da linha.
     e.stopPropagation()
 
-    const next = !optimistic
-    setOptimistic(next)
+    const next = !paid
+    applyLocal(id, { paid: next, paidDay: next ? Number(dueDate.slice(8, 10)) : null })
 
     try {
       const res = await fetch(`/api/transactions/${id}`, {
@@ -41,12 +49,12 @@ export function PaidToggle({
         body: JSON.stringify({ paidDate: next ? dueDate : null }),
       })
       if (!res.ok) {
-        setOptimistic(!next) // reverte
+        clearLocal(id) // servidor recusou: volta ao que ele diz
         return
       }
       startTransition(() => router.refresh())
     } catch {
-      setOptimistic(!next)
+      clearLocal(id)
     }
   }
 
@@ -54,15 +62,15 @@ export function PaidToggle({
     <button
       type="button"
       onClick={toggle}
-      className={`${styles.toggle} ${optimistic ? styles.paid : styles.pending} ${pending ? styles.busy : ''}`}
-      aria-label={optimistic ? `${label}: pago, marcar como a pagar` : `${label}: a pagar, marcar como pago`}
-      aria-pressed={optimistic}
-      title={optimistic ? 'Pago (clique para desmarcar)' : 'A pagar (clique para marcar)'}
+      className={`${styles.toggle} ${paid ? styles.paid : styles.pending} ${pending ? styles.busy : ''}`}
+      aria-label={paid ? `${label}: pago, marcar como a pagar` : `${label}: a pagar, marcar como pago`}
+      aria-pressed={paid}
+      title={paid ? 'Pago (clique para desmarcar)' : 'A pagar (clique para marcar)'}
     >
       <span className={styles.icon} aria-hidden>
-        {optimistic ? '✓' : '○'}
+        {paid ? '✓' : '○'}
       </span>
-      {optimistic ? 'Pago' : 'A pagar'}
+      {paid ? 'Pago' : 'A pagar'}
     </button>
   )
 }

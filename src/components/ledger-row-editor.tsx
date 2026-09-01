@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { LedgerRow } from '@/lib/ledger'
 import { useCategories } from './use-categories'
+import { RowHistory } from './row-history'
 import styles from './ledger-row-editor.module.css'
 
 /**
@@ -17,10 +18,14 @@ export function LedgerRowEditor({
   row,
   month,
   onClose,
+  applyLocal,
+  clearLocal,
 }: {
   row: LedgerRow
   month: string
   onClose: () => void
+  applyLocal: (id: string, patch: Partial<LedgerRow>) => void
+  clearLocal: (id: string) => void
 }) {
   const router = useRouter()
   const [description, setDescription] = useState(row.description)
@@ -69,6 +74,23 @@ export function LedgerRowEditor({
         setError(data.error ?? 'Não deu para salvar.')
         return
       }
+
+      /* Pinta o resultado antes do servidor responder de novo.
+       *
+       * Usa o que o PATCH devolveu, nao o que foi digitado: o valor pode ter
+       * vindo de formula ("=4*550"), e quem resolve isso e o servidor. Mostrar
+       * o texto cru piscaria "=4*550" na coluna de valor. */
+      applyLocal(row.id, {
+        description: data.description,
+        amountCents: data.amountCents,
+        dueDate: data.dueDate,
+        dueDay: Number(String(data.dueDate).slice(8, 10)),
+        paid: data.paidAt !== null,
+        categoryName:
+          categories.find((c) => c.slug === categorySlug)?.name ?? null,
+        categorySlug: categorySlug || null,
+      })
+
       onClose()
       router.refresh()
     } catch {
@@ -87,6 +109,8 @@ export function LedgerRowEditor({
         setError(d.error ?? 'Não deu para apagar.')
         return
       }
+      // A linha vai sumir no refresh: nao vale segurar sobreposicao dela.
+      clearLocal(row.id)
       onClose()
       router.refresh()
     } finally {
@@ -202,6 +226,8 @@ export function LedgerRowEditor({
           </button>
         )}
       </div>
+
+      <RowHistory transactionId={row.id} />
     </div>
   )
 }
