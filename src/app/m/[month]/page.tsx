@@ -18,6 +18,7 @@ import { TZ } from '@/lib/nl/resolve'
 dayjs.extend(utc)
 dayjs.extend(timezone)
 import { getLedger } from '@/lib/ledger'
+import { openMonth } from '@/lib/month/open'
 import { getFlowItems, getOpeningBalance } from '@/lib/cashflow/queries'
 import { projectCashflow } from '@/lib/cashflow/project'
 import { narrateInsights, type Summary } from '@/lib/insights/narrate'
@@ -31,8 +32,26 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
   const { month } = await params
   if (!/^\d{4}-\d{2}$/.test(month)) notFound()
 
-  const months = await listMonths()
-  if (!months.includes(month)) notFound()
+  let months = await listMonths()
+
+  /* Mes que ainda nao existe: abre antes de decidir que e 404.
+   *
+   * Era aqui que virar o mes dava 404. As recorrencias de setembro ja estavam
+   * previstas no banco, mas nenhum lancamento existia, entao `listMonths()` nao
+   * listava setembro e a pagina nem carregava. Abrir promove as previsoes a
+   * linhas "a pagar", como copiar a planilha do mes anterior fazia.
+   *
+   * So vale para o mes corrente ou futuro: abrir um mes passado que ficou vazio
+   * inventaria historico que nunca aconteceu. */
+  if (!months.includes(month)) {
+    const atual = dayjs().tz(TZ).format('YYYY-MM')
+    if (month < atual) notFound()
+
+    const { created } = await openMonth(month)
+    if (created === 0) notFound()
+
+    months = await listMonths()
+  }
 
   const [txs, goals, series] = await Promise.all([
     getMonthTransactions(month),
