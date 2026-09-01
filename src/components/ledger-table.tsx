@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Ledger, LedgerRow } from '@/lib/ledger'
 import { formatBRL } from '@/lib/month-summary'
 import { LedgerRowEditor } from './ledger-row-editor'
@@ -40,12 +40,47 @@ export function LedgerTable({
   const [editing, setEditing] = useState<string | null>(null)
   const [adding, setAdding] = useState<'expense' | 'income' | null>(null)
 
+  /* Mudancas ja aplicadas na tela, antes do servidor confirmar.
+   *
+   * Antes o estado otimista morava dentro do botao de pago: o botao trocava na
+   * hora, mas a linha (cor de fundo, faixa da esquerda) so mudava quando o
+   * refresh voltava do servidor, e o valor e o nome nem isso. Aqui a
+   * sobreposicao vive na tabela, entao a linha inteira responde junto. */
+  const [overrides, setOverrides] = useState<Record<string, Partial<LedgerRow>>>({})
+
+  const applyLocal = (id: string, patch: Partial<LedgerRow>) =>
+    setOverrides((o) => ({ ...o, [id]: { ...o[id], ...patch } }))
+
+  /* Descarta a sobreposicao: ou o servidor recusou, ou ja respondeu e os dados
+   * novos chegaram por props. Manter a copia local depois disso faria a linha
+   * ignorar mudanca vinda de outro lugar. */
+  const clearLocal = (id: string) =>
+    setOverrides((o) => {
+      const { [id]: _, ...rest } = o
+      return rest
+    })
+
+  const merge = (r: LedgerRow): LedgerRow => ({ ...r, ...overrides[r.id] })
+
+  /* Quando os dados do servidor mudam, a sobreposicao ja cumpriu seu papel.
+   *
+   * Sem isso, a copia local venceria para sempre: apagar um lancamento e
+   * recriar com o mesmo id, ou editar em outra aba, deixaria a linha exibindo
+   * o valor antigo indefinidamente. */
+  const anterior = useRef(ledger)
+  useEffect(() => {
+    if (anterior.current !== ledger) {
+      anterior.current = ledger
+      setOverrides({})
+    }
+  }, [ledger])
+
   return (
     <div className={styles.grid}>
       <LedgerColumn
         title="Despesas"
         tone="expense"
-        rows={ledger.expenses}
+        rows={ledger.expenses.map(merge)}
         totalCents={ledger.totalExpenseCents}
         subtitle={`${formatBRL(ledger.paidExpenseCents)} pago`}
         month={month}
@@ -54,11 +89,13 @@ export function LedgerTable({
         adding={adding === 'expense'}
         setAdding={setAdding}
         today={today}
+        applyLocal={applyLocal}
+        clearLocal={clearLocal}
       />
       <LedgerColumn
         title="Receitas"
         tone="income"
-        rows={ledger.incomes}
+        rows={ledger.incomes.map(merge)}
         totalCents={ledger.totalIncomeCents}
         subtitle={`${ledger.incomes.length} ${ledger.incomes.length === 1 ? 'fonte' : 'fontes'}`}
         month={month}
@@ -67,6 +104,8 @@ export function LedgerTable({
         adding={adding === 'income'}
         setAdding={setAdding}
         today={today}
+        applyLocal={applyLocal}
+        clearLocal={clearLocal}
       />
     </div>
   )
@@ -84,6 +123,8 @@ function LedgerColumn({
   adding,
   setAdding,
   today,
+  applyLocal,
+  clearLocal,
 }: {
   title: string
   tone: 'expense' | 'income'
@@ -96,6 +137,8 @@ function LedgerColumn({
   adding: boolean
   setAdding: (k: 'expense' | 'income' | null) => void
   today: string
+  applyLocal: (id: string, patch: Partial<LedgerRow>) => void
+  clearLocal: (id: string) => void
 }) {
   return (
     <section className={`${styles.col} ${styles[tone]}`} aria-label={title}>
@@ -150,7 +193,13 @@ function LedgerColumn({
                 return editing === r.id ? (
                   <tr key={r.id} className={styles.editingRow}>
                     <td colSpan={4}>
-                      <LedgerRowEditor row={r} month={month} onClose={() => setEditing(null)} />
+                      <LedgerRowEditor
+                        row={r}
+                        month={month}
+                        onClose={() => setEditing(null)}
+                        applyLocal={applyLocal}
+                        clearLocal={clearLocal}
+                      />
                     </td>
                   </tr>
                 ) : (
@@ -198,6 +247,8 @@ function LedgerColumn({
                       <PaidToggle
                         id={r.id}
                         paid={r.paid}
+                        applyLocal={applyLocal}
+                        clearLocal={clearLocal}
                         dueDate={r.dueDate}
                         label={r.description}
                       />

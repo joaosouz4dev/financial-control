@@ -15,6 +15,13 @@
       "when": 1786031172058,
       "tag": "0002_categorias_e_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788273992089,
+      "tag": "0003_historico_lancamento",
+      "breakpoints": true
     }
   ]
 }

@@ -3,8 +3,9 @@ import { z } from 'zod'
 import { and, eq } from 'drizzle-orm'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { transactions, categories, contexts } from '@/db/schema'
+import { transactions, categories, contexts, transactionEvents } from '@/db/schema'
 import { evaluateToCents, FormulaError } from '@/lib/formula/evaluate'
+import { diffTransaction, type TxSnapshot } from '@/lib/events/diff'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -50,6 +51,23 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
   const [ctxRow] = await db.select().from(contexts).where(eq(contexts.slug, 'pessoal')).limit(1)
   if (!ctxRow) return NextResponse.json({ error: 'Contexto não encontrado' }, { status: 500 })
+
+  /* O historico precisa do antes. Ler aqui, e nao depois do update, e o que
+   * permite dizer "de R$ 92,00 para R$ 110,00" em vez de so o valor final. */
+  const [before] = await db
+    .select({
+      description: transactions.description,
+      amountCents: transactions.amountCents,
+      dueDate: transactions.dueDate,
+      paidAt: transactions.paidAt,
+      categoryName: categories.name,
+    })
+    .from(transactions)
+    .leftJoin(categories, eq(categories.id, transactions.categoryId))
+    .where(and(eq(transactions.id, id), eq(transactions.contextId, ctxRow.id)))
+    .limit(1)
+
+  if (!before) return NextResponse.json({ error: 'Lançamento não encontrado' }, { status: 404 })
 
   const patch = parsed.data
   const update: Record<string, unknown> = { updatedAt: new Date() }
@@ -101,6 +119,40 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     .returning()
 
   if (!updated) return NextResponse.json({ error: 'Lançamento não encontrado' }, { status: 404 })
+
+  const [depois] = await db
+    .select({ categoryName: categories.name })
+    .from(transactions)
+    .leftJoin(categories, eq(categories.id, transactions.categoryId))
+    .where(eq(transactions.id, id))
+    .limit(1)
+
+  const antes: TxSnapshot = {
+    description: before.description,
+    amountCents: before.amountCents,
+    dueDate: before.dueDate,
+    categoryName: before.categoryName ?? null,
+    paidAt: before.paidAt,
+  }
+  const agora: TxSnapshot = {
+    description: updated.description,
+    amountCents: updated.amountCents,
+    dueDate: updated.dueDate,
+    categoryName: depois?.categoryName ?? null,
+    paidAt: updated.paidAt,
+  }
+
+  const events = diffTransaction(antes, agora)
+  if (events.length > 0) {
+    await db.insert(transactionEvents).values(
+      events.map((e) => ({
+        transactionId: id,
+        kind: e.kind,
+        fromValue: e.fromValue,
+        toValue: e.toValue,
+      })),
+    )
+  }
 
   return NextResponse.json({
     id: updated.id,

@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { transactions, categories, contexts } from '@/db/schema'
+import { transactions, categories, contexts, transactionEvents } from '@/db/schema'
 import { evaluateToCents, FormulaError } from '@/lib/formula/evaluate'
 
 export const runtime = 'nodejs'
@@ -78,6 +78,14 @@ export async function POST(req: Request) {
       source: 'manual',
     })
     .returning()
+
+  // Abre o historico: sem isso a trilha comeca no meio, na primeira edicao.
+  await db.insert(transactionEvents).values({
+    transactionId: created!.id,
+    kind: 'created',
+    fromValue: null,
+    toValue: null,
+  })
 
   return NextResponse.json({ id: created!.id, description: created!.description })
 }

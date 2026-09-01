@@ -1,0 +1,76 @@
+.wrap {
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--line);
+}
+
+.titulo {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 0.5rem;
+}
+
+.lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+}
+
+/* A marca colorida classifica o evento; o texto ao lado o descreve, entao a
+   cor nunca carrega o sentido sozinha. */
+.marca {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  flex: none;
+  background: var(--ink-faint);
+}
+
+.paid {
+  background: var(--ok);
+}
+
+.unpaid {
+  background: var(--warn);
+}
+
+.amount {
+  background: var(--brand);
+}
+
+.created {
+  background: var(--ink-faint);
+}
+
+.texto {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.quando {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.vazio {
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.76rem;
+  color: var(--ink-faint);
+}
