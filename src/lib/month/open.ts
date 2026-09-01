@@ -1,6 +1,12 @@
 import { and, eq, gte, isNull, lte, sql } from 'drizzle-orm'
 import { db } from '@/db'
-import { contexts, transactionEvents, transactions } from '@/db/schema'
+import {
+  contexts,
+  recurrenceOccurrences,
+  recurrenceRules,
+  transactionEvents,
+  transactions,
+} from '@/db/schema'
 
 /**
  * Abre o mes copiando o mes anterior, sem os pagamentos.
@@ -111,7 +117,21 @@ export async function openMonth(
     source: 'recurrence' as const,
   }))
 
-  const criados = await db.insert(transactions).values(novos).returning({ id: transactions.id })
+  const criados = await db
+    .insert(transactions)
+    .values(novos)
+    .returning({ id: transactions.id, ruleId: transactions.ruleId, dueDate: transactions.dueDate })
+
+  /* Casa cada linha nova com a previsao correspondente do mes.
+   *
+   * Sem isso o fluxo de caixa conta o mesmo dinheiro duas vezes: uma como
+   * lancamento (a linha copiada) e outra como previsao solta (a ocorrencia da
+   * regra, que continua sem transaction_id). Em setembro isso somava
+   * R$ 23.350,80 a mais, quase o mes inteiro em dobro.
+   *
+   * Casa por regra + mes, nao por dia: o dia pode ter mudado entre um mes e
+   * outro, e a previsao continua sendo a mesma conta. */
+  await linkOccurrences(ctx.id, criados, from, to)
 
   // Abre o historico de cada linha nova, senao a trilha comeca no meio.
   if (criados.length > 0) {
@@ -126,4 +146,49 @@ export async function openMonth(
   }
 
   return { month, created: criados.length, copiedFrom: anterior }
+}
+
+async function linkOccurrences(
+  contextId: string,
+  criados: Array<{ id: string; ruleId: string | null }>,
+  from: string,
+  to: string,
+) {
+  const comRegra = criados.filter((c): c is { id: string; ruleId: string } => c.ruleId !== null)
+  if (comRegra.length === 0) return
+
+  const abertas = await db
+    .select({
+      id: recurrenceOccurrences.id,
+      ruleId: recurrenceOccurrences.ruleId,
+    })
+    .from(recurrenceOccurrences)
+    .innerJoin(recurrenceRules, eq(recurrenceRules.id, recurrenceOccurrences.ruleId))
+    .where(
+      and(
+        eq(recurrenceRules.contextId, contextId),
+        gte(recurrenceOccurrences.dueDate, from),
+        lte(recurrenceOccurrences.dueDate, to),
+        isNull(recurrenceOccurrences.transactionId),
+      ),
+    )
+
+  /* Uma ocorrencia por regra: se a regra tem duas previsoes no mesmo mes
+   * (cadencia semanal), a primeira livre serve. O que importa e nao deixar
+   * previsao solta competindo com um lancamento que ja existe. */
+  const porRegra = new Map<string, string[]>()
+  for (const o of abertas) {
+    const lista = porRegra.get(o.ruleId) ?? []
+    lista.push(o.id)
+    porRegra.set(o.ruleId, lista)
+  }
+
+  for (const c of comRegra) {
+    const livre = porRegra.get(c.ruleId)?.shift()
+    if (!livre) continue
+    await db
+      .update(recurrenceOccurrences)
+      .set({ transactionId: c.id })
+      .where(eq(recurrenceOccurrences.id, livre))
+  }
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '@/db'
-import { contexts, transactions } from '@/db/schema'
+import { contexts, recurrenceOccurrences, recurrenceRules, transactions } from '@/db/schema'
 import { monthBounds, openMonth, previousMonth, shiftDay } from './open'
 
 /**
@@ -143,6 +143,57 @@ describe.skipIf(!hasDb)('openMonth: copia o mes anterior sem os pagamentos', () 
     expect(novas[0]!.kind).toBe('income')
     // Receita tambem abre sem baixa: ainda nao entrou.
     expect(novas[0]!.paidAt).toBeNull()
+  })
+
+  it('liga a linha copiada a previsao, para nao contar duas vezes', async () => {
+    /* O bug que apareceu em setembro: a linha copiada e a previsao da regra
+     * viravam dois itens no fluxo de caixa, somando o mesmo dinheiro em dobro
+     * (R$ 23.350,80 no mes inteiro). */
+    const [regra] = await db
+      .insert(recurrenceRules)
+      .values({
+        contextId: ctxId,
+        kind: 'income',
+        label: `Salario ${MARKER}`,
+        amountCents: 500000,
+        cadence: 'monthly',
+        dayOfMonth: 29,
+        startsOn: '2097-01-01',
+        active: true,
+      })
+      .returning()
+
+    await db.insert(recurrenceOccurrences).values({
+      ruleId: regra!.id,
+      dueDate: `${MES}-29`,
+      expectedCents: 500000,
+    })
+
+    // A linha do mes anterior aponta para a mesma regra.
+    await db.insert(transactions).values({
+      contextId: ctxId,
+      kind: 'income',
+      amountCents: 900000,
+      description: `Salario ${MARKER}`,
+      dueDate: `${ANTERIOR}-29`,
+      paidAt: new Date(`${ANTERIOR}-29T12:00:00-03:00`),
+      ruleId: regra!.id,
+      source: 'manual',
+    })
+
+    await openMonth(MES)
+
+    const [occ] = await db
+      .select()
+      .from(recurrenceOccurrences)
+      .where(eq(recurrenceOccurrences.ruleId, regra!.id))
+
+    // A previsao passou a apontar para a linha nova: deixou de estar solta.
+    expect(occ!.transactionId).not.toBeNull()
+
+    await db.delete(recurrenceOccurrences).where(eq(recurrenceOccurrences.ruleId, regra!.id))
+    await db.delete(transactions).where(eq(transactions.ruleId, regra!.id))
+    await db.delete(recurrenceRules).where(eq(recurrenceRules.id, regra!.id))
   })
 
   it('mes invalido e erro, nao um mes vazio silencioso', async () => {

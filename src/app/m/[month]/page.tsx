@@ -129,9 +129,9 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
             <section className={styles.panel} aria-labelledby="cf-h">
               <div className={styles.panelHead}>
                 <h2 id="cf-h" className={styles.panelTitle}>Fluxo de caixa</h2>
-                <span className={styles.panelHint}>saldo dia a dia</span>
+                <span className={styles.panelHint}>saldo dia a dia, tracejado = previsto</span>
               </div>
-              <CashflowChart projection={projection} />
+              <CashflowChart projection={projection} today={dayjs().tz(TZ).format('YYYY-MM-DD')} />
             </section>
 
             <section className={styles.panel} aria-labelledby="cat-h">
