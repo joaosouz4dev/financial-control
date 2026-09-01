@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import type { Ledger, LedgerRow } from '@/lib/ledger'
+import { useState } from 'react'
+import type { LedgerRow } from '@/lib/ledger'
+import { useLedgerStore } from './ledger-store'
 import { formatBRL } from '@/lib/month-summary'
 import { LedgerRowEditor } from './ledger-row-editor'
 import { PaidToggle } from './paid-toggle'
@@ -28,11 +29,9 @@ const ROW_CLASS: Record<DueStatus, string> = {
 }
 
 export function LedgerTable({
-  ledger,
   month,
   today,
 }: {
-  ledger: Ledger
   month: string
   /** Vem do servidor: o "hoje" do fuso do Joao, nao o do relogio do browser. */
   today: string
@@ -40,47 +39,16 @@ export function LedgerTable({
   const [editing, setEditing] = useState<string | null>(null)
   const [adding, setAdding] = useState<'expense' | 'income' | null>(null)
 
-  /* Mudancas ja aplicadas na tela, antes do servidor confirmar.
-   *
-   * Antes o estado otimista morava dentro do botao de pago: o botao trocava na
-   * hora, mas a linha (cor de fundo, faixa da esquerda) so mudava quando o
-   * refresh voltava do servidor, e o valor e o nome nem isso. Aqui a
-   * sobreposicao vive na tabela, entao a linha inteira responde junto. */
-  const [overrides, setOverrides] = useState<Record<string, Partial<LedgerRow>>>({})
-
-  const applyLocal = (id: string, patch: Partial<LedgerRow>) =>
-    setOverrides((o) => ({ ...o, [id]: { ...o[id], ...patch } }))
-
-  /* Descarta a sobreposicao: ou o servidor recusou, ou ja respondeu e os dados
-   * novos chegaram por props. Manter a copia local depois disso faria a linha
-   * ignorar mudanca vinda de outro lugar. */
-  const clearLocal = (id: string) =>
-    setOverrides((o) => {
-      const { [id]: _, ...rest } = o
-      return rest
-    })
-
-  const merge = (r: LedgerRow): LedgerRow => ({ ...r, ...overrides[r.id] })
-
-  /* Quando os dados do servidor mudam, a sobreposicao ja cumpriu seu papel.
-   *
-   * Sem isso, a copia local venceria para sempre: apagar um lancamento e
-   * recriar com o mesmo id, ou editar em outra aba, deixaria a linha exibindo
-   * o valor antigo indefinidamente. */
-  const anterior = useRef(ledger)
-  useEffect(() => {
-    if (anterior.current !== ledger) {
-      anterior.current = ledger
-      setOverrides({})
-    }
-  }, [ledger])
+  /* A camada otimista vive no store, compartilhada com os cards de cima: as
+   * duas partes leem a mesma lista, entao nao tem como discordarem. */
+  const { ledger, applyLocal, removeLocal, clearLocal } = useLedgerStore()
 
   return (
     <div className={styles.grid}>
       <LedgerColumn
         title="Despesas"
         tone="expense"
-        rows={ledger.expenses.map(merge)}
+        rows={ledger.expenses}
         totalCents={ledger.totalExpenseCents}
         subtitle={`${formatBRL(ledger.paidExpenseCents)} pago`}
         month={month}
@@ -91,11 +59,12 @@ export function LedgerTable({
         today={today}
         applyLocal={applyLocal}
         clearLocal={clearLocal}
+        removeLocal={removeLocal}
       />
       <LedgerColumn
         title="Receitas"
         tone="income"
-        rows={ledger.incomes.map(merge)}
+        rows={ledger.incomes}
         totalCents={ledger.totalIncomeCents}
         subtitle={`${ledger.incomes.length} ${ledger.incomes.length === 1 ? 'fonte' : 'fontes'}`}
         month={month}
@@ -106,6 +75,7 @@ export function LedgerTable({
         today={today}
         applyLocal={applyLocal}
         clearLocal={clearLocal}
+        removeLocal={removeLocal}
       />
     </div>
   )
@@ -125,6 +95,7 @@ function LedgerColumn({
   today,
   applyLocal,
   clearLocal,
+  removeLocal,
 }: {
   title: string
   tone: 'expense' | 'income'
@@ -139,6 +110,7 @@ function LedgerColumn({
   today: string
   applyLocal: (id: string, patch: Partial<LedgerRow>) => void
   clearLocal: (id: string) => void
+  removeLocal: (id: string) => void
 }) {
   return (
     <section className={`${styles.col} ${styles[tone]}`} aria-label={title}>
@@ -199,6 +171,7 @@ function LedgerColumn({
                         onClose={() => setEditing(null)}
                         applyLocal={applyLocal}
                         clearLocal={clearLocal}
+                        removeLocal={removeLocal}
                       />
                     </td>
                   </tr>
