@@ -20,12 +20,14 @@ export function LedgerRowEditor({
   onClose,
   applyLocal,
   clearLocal,
+  removeLocal,
 }: {
   row: LedgerRow
   month: string
   onClose: () => void
   applyLocal: (id: string, patch: Partial<LedgerRow>) => void
   clearLocal: (id: string) => void
+  removeLocal: (id: string) => void
 }) {
   const router = useRouter()
   const [description, setDescription] = useState(row.description)
@@ -101,20 +103,20 @@ export function LedgerRowEditor({
   }
 
   async function remove() {
-    setBusy(true)
+    /* Some da tela imediatamente, e os totais de cima caem junto: a linha sai
+     * da lista que os cards somam. Se o servidor recusar, ela volta. */
+    removeLocal(row.id)
+    onClose()
+
     try {
       const res = await fetch(`/api/transactions/${row.id}`, { method: 'DELETE' })
       if (!res.ok) {
-        const d = await res.json()
-        setError(d.error ?? 'Não deu para apagar.')
+        clearLocal(row.id) // recusou: a linha reaparece
         return
       }
-      // A linha vai sumir no refresh: nao vale segurar sobreposicao dela.
-      clearLocal(row.id)
-      onClose()
       router.refresh()
-    } finally {
-      setBusy(false)
+    } catch {
+      clearLocal(row.id)
     }
   }
 

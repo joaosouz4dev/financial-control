@@ -8,7 +8,6 @@ import { InsightCard } from '@/components/insight-card'
 import { CategoryBar } from '@/components/category-bar'
 import { MonthNav } from '@/components/month-nav'
 import { CashflowChart } from '@/components/cashflow-chart'
-import { MonthSummaryCard } from '@/components/month-summary-card'
 import { LedgerTable } from '@/components/ledger-table'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc.js'
@@ -21,7 +20,10 @@ import { getLedger } from '@/lib/ledger'
 import { openMonth } from '@/lib/month/open'
 import { getFlowItems, getOpeningBalance } from '@/lib/cashflow/queries'
 import { projectCashflow } from '@/lib/cashflow/project'
-import { narrateInsights, type Summary } from '@/lib/insights/narrate'
+import { buildInsights } from '@/lib/insights/build'
+import { LedgerProvider } from '@/components/ledger-store'
+import { MonthStats } from '@/components/month-stats'
+import { MonthNarration } from '@/components/month-narration'
 import { monthRange } from '@/lib/queries'
 import Link from 'next/link'
 import styles from './page.module.css'
@@ -53,38 +55,34 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
     months = await listMonths()
   }
 
-  const [txs, goals, series] = await Promise.all([
-    getMonthTransactions(month),
-    getGoals(month),
-    getPriceSeries(),
-  ])
-
-  const summary = summarizeMonth(month, txs, goals)
-
   const idx = months.indexOf(month)
   const prevMonth = idx > 0 ? months[idx - 1]! : null
   const nextMonth = idx < months.length - 1 ? months[idx + 1]! : null
 
-  let expenseDelta: number | null = null
-  if (prevMonth) {
-    const prevTxs = await getMonthTransactions(prevMonth)
-    const prev = summarizeMonth(prevMonth, prevTxs, goals)
-    expenseDelta = summary.totalExpenseCents - prev.totalExpenseCents
-  }
-
-  const insights = buildInsights(month, summary, txs, series)
-
-  // Fluxo de caixa: o total do mes pode fechar positivo e o saldo mergulhar no
-  // dia 12. A planilha nunca mostrou isso.
+  /* Tudo de uma vez. Antes o mes anterior era buscado sozinho, entre dois
+   * blocos paralelos, e sozinho custava o tempo de uma ida ao banco inteira.
+   * Como cada refresh da tabela re-renderiza a pagina, isso pesava em toda
+   * mudanca. */
   const { from, to } = monthRange(month)
-  const [flowItems, opening, ledger] = await Promise.all([
+  const [txs, goals, series, prevTxs, flowItems, opening, ledger] = await Promise.all([
+    getMonthTransactions(month),
+    getGoals(month),
+    getPriceSeries(),
+    prevMonth ? getMonthTransactions(prevMonth) : Promise.resolve(null),
     getFlowItems(from, to),
     getOpeningBalance(from),
     getLedger(month),
   ])
-  const projection = projectCashflow(flowItems, opening, from, to)
 
-  const narrated = await narrateSafely(month, insights, projection)
+  const summary = summarizeMonth(month, txs, goals)
+
+  const expenseDelta =
+    prevMonth && prevTxs
+      ? summary.totalExpenseCents - summarizeMonth(prevMonth, prevTxs, goals).totalExpenseCents
+      : null
+
+  const insights = buildInsights(month, summary, txs, series)
+  const projection = projectCashflow(flowItems, opening, from, to)
 
 
   return (
@@ -94,53 +92,21 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
       </AppHeader>
 
       <main className={styles.main}>
-        <section className={styles.stats} aria-label="Resumo do mês">
-          <article className={styles.stat}>
-            <span className={styles.statLabel}>Receita</span>
-            <strong className={`${styles.statValue} tnum`}>{formatBRL(summary.totalIncomeCents)}</strong>
-            <span className={styles.statMeta}>{formatBRL(summary.toReceiveCents)} a receber</span>
-          </article>
-
-          <article className={styles.stat}>
-            <span className={styles.statLabel}>Despesa</span>
-            <strong className={`${styles.statValue} tnum`}>{formatBRL(summary.totalExpenseCents)}</strong>
-            {expenseDelta !== null ? (
-              <span className={`${styles.statMeta} ${expenseDelta > 0 ? styles.metaUp : styles.metaDown}`}>
-                {expenseDelta > 0 ? '↑' : '↓'} {formatBRL(Math.abs(expenseDelta))} vs mês anterior
-              </span>
-            ) : (
-              <span className={styles.statMeta}>{summary.expenseCount} lançamentos</span>
-            )}
-          </article>
-
-          <article className={styles.stat}>
-            <span className={styles.statLabel}>A pagar</span>
-            <strong className={`${styles.statValue} tnum`}>{formatBRL(summary.toPayCents)}</strong>
-            <span className={styles.statMeta}>{formatBRL(summary.paidCents)} já pago</span>
-          </article>
-
-          <article className={`${styles.stat} ${styles.statHighlight}`}>
-            <span className={styles.statLabel}>Previsão de saldo</span>
-            <strong className={`${styles.statValue} tnum`}>{formatBRL(summary.projectedBalanceCents)}</strong>
-            <span className={styles.statMeta}>
-              meta de investimento: {formatBRL(summary.investmentTargetCents)}
-            </span>
-          </article>
-        </section>
-
-        {narrated && (
-          <MonthSummaryCard
-            summary={narrated}
-            insightTitles={new Map(insights.map((i) => [i.fingerprint, i.title]))}
+        <LedgerProvider ledger={ledger}>
+          <MonthStats
+            expenseDelta={expenseDelta}
+            investmentTargetCents={summary.investmentTargetCents}
           />
-        )}
+
+        <MonthNarration month={month} />
 
 
-        <section aria-label="Lançamentos do mês">
-          {/* "Hoje" e resolvido no servidor, no fuso do Joao: o relogio do
-              browser pode estar em outro fuso e pintaria a linha errada. */}
-          <LedgerTable ledger={ledger} month={month} today={dayjs().tz(TZ).format('YYYY-MM-DD')} />
-        </section>
+          <section aria-label="Lançamentos do mês">
+            {/* "Hoje" e resolvido no servidor, no fuso do Joao: o relogio do
+                browser pode estar em outro fuso e pintaria a linha errada. */}
+            <LedgerTable month={month} today={dayjs().tz(TZ).format('YYYY-MM-DD')} />
+          </section>
+        </LedgerProvider>
 
         <div className={styles.columns}>
           <div className={styles.colMain}>
@@ -184,90 +150,4 @@ export default async function MonthPage({ params }: { params: Promise<{ month: s
       </main>
     </div>
   )
-}
-
-/**
- * A narracao e um extra: se a chave nao esta configurada ou a LLM falhou, o
- * dashboard segue com os fatos crus. Os detectores sao o produto; o conselho
- * e o acabamento.
- */
-async function narrateSafely(
-  month: string,
-  insights: Insight[],
-  projection: ReturnType<typeof projectCashflow>,
-): Promise<Summary | null> {
-  if (!process.env.ANTHROPIC_API_KEY || insights.length === 0) return null
-
-  try {
-    const r = await narrateInsights({
-      month,
-      insights,
-      cashflow: {
-        closingBalanceCents: projection.closingBalanceCents,
-        firstNegativeDate: projection.firstNegative?.date ?? null,
-        firstNegativeCents: projection.firstNegative?.balanceCents ?? null,
-        troughDate: projection.trough?.date ?? null,
-        troughCents: projection.trough?.balanceCents ?? null,
-      },
-    })
-    return r.summary
-  } catch (e) {
-    console.error('narração falhou, seguindo sem ela:', e)
-    return null
-  }
-}
-
-/** Roda os detectores deterministicos sobre os dados do banco. */
-function buildInsights(
-  month: string,
-  summary: ReturnType<typeof summarizeMonth>,
-  txs: Awaited<ReturnType<typeof getMonthTransactions>>,
-  series: Awaited<ReturnType<typeof getPriceSeries>>,
-): Insight[] {
-  const out: Insight[] = []
-
-  // Fatura de cartao varia por natureza: fora do detector de preco.
-  out.push(...detectPriceChanges(series.filter((s) => !isVolatileByNature(s.label))))
-
-  const incomeSources = txs
-    .filter((t) => t.kind === 'income')
-    .map((t) => ({ label: t.description, amountCents: t.amountCents }))
-  out.push(...detectIncomeConcentration(month, incomeSources))
-
-  out.push(
-    ...detectGoalBreaches(
-      month,
-      summary.totalIncomeCents,
-      summary.categories.map((c) => ({
-        categoryId: c.slug,
-        categoryName: c.name,
-        spentCents: c.spentCents,
-        goalPct: c.goalPct,
-      })),
-    ),
-  )
-
-  const outros = summary.categories.find((c) => c.slug === 'outros')
-  if (outros) {
-    out.push(
-      ...detectCatchAllCategory(
-        month,
-        outros.name,
-        outros.slug,
-        outros.count,
-        outros.spentCents,
-        summary.totalIncomeCents,
-        outros.goalPct,
-      ),
-    )
-  }
-
-  // Insight do mes atual, mais mudanca de preco que caiu neste mes.
-  const relevant = out.filter((i) => {
-    const m = (i.evidence as Record<string, unknown>).toMonth ?? (i.evidence as Record<string, unknown>).month
-    return m === month || m === undefined
-  })
-
-  const order = { critical: 0, warn: 1, info: 2 } as const
-  return relevant.sort((a, b) => order[a.severity] - order[b.severity])
 }
