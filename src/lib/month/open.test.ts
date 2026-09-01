@@ -1,54 +1,48 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '@/db'
-import {
-  contexts,
-  recurrenceOccurrences,
-  recurrenceRules,
-  transactions,
-} from '@/db/schema'
-import { monthBounds, openMonth } from './open'
+import { contexts, transactions } from '@/db/schema'
+import { monthBounds, openMonth, previousMonth, shiftDay } from './open'
 
 /**
- * Testa contra o Postgres real: a idempotencia da abertura depende dos indices
+ * Testa contra o Postgres real: a garantia de nao duplicar depende do estado
  * do banco, entao um mock provaria so que o mock funciona.
  *
- * Usa um mes bem no futuro (2099) para nao encostar nos dados reais do Joao.
+ * Usa 2097, e nao 2099, porque itemize.test.ts soma o ano de 2099 inteiro para
+ * checar a regra anti-dupla-contagem: os dois rodam em paralelo e as linhas
+ * daqui entrariam naquela soma.
  */
 
 const hasDb = !!process.env.DATABASE_URL
 const MARKER = 'OPEN_MONTH_TEST'
-const MES = '2099-04'
+const ANTERIOR = '2097-03'
+const MES = '2097-04'
 
 let ctxId: string
 
-async function criarRegra(label: string, dia: number, cents: number) {
-  const [r] = await db
-    .insert(recurrenceRules)
+async function lancar(
+  description: string,
+  dueDate: string,
+  cents: number,
+  paid = false,
+) {
+  const [t] = await db
+    .insert(transactions)
     .values({
       contextId: ctxId,
       kind: 'expense',
-      label: `${label} ${MARKER}`,
       amountCents: cents,
-      cadence: 'monthly',
-      dayOfMonth: dia,
-      startsOn: '2099-01-01',
-      active: true,
+      description: `${description} ${MARKER}`,
+      dueDate,
+      paidAt: paid ? new Date(`${dueDate}T12:00:00-03:00`) : null,
+      source: 'manual',
     })
     .returning()
-  return r!
+  return t!
 }
 
-async function criarOcorrencia(ruleId: string, dueDate: string, cents: number) {
-  const [o] = await db
-    .insert(recurrenceOccurrences)
-    .values({ ruleId, dueDate, expectedCents: cents })
-    .returning()
-  return o!
-}
-
-async function lancamentosDoMes() {
-  const { from, to } = monthBounds(MES)
+async function doMes(month: string) {
+  const { from, to } = monthBounds(month)
   return db
     .select()
     .from(transactions)
@@ -60,7 +54,7 @@ async function lancamentosDoMes() {
     )
 }
 
-describe.skipIf(!hasDb)('openMonth: abrir o mes novo', () => {
+describe.skipIf(!hasDb)('openMonth: copia o mes anterior sem os pagamentos', () => {
   beforeAll(async () => {
     const [c] = await db.select().from(contexts).where(eq(contexts.slug, 'pessoal')).limit(1)
     ctxId = c!.id
@@ -68,127 +62,113 @@ describe.skipIf(!hasDb)('openMonth: abrir o mes novo', () => {
 
   afterEach(async () => {
     await db.delete(transactions).where(sql`${transactions.description} like ${'%' + MARKER + '%'}`)
-    await db.execute(
-      sql`delete from recurrence_occurrences where rule_id in (select id from recurrence_rules where label like ${'%' + MARKER + '%'})`,
-    )
-    await db.delete(recurrenceRules).where(sql`${recurrenceRules.label} like ${'%' + MARKER + '%'}`)
   })
 
-  it('promove a previsao a lancamento a pagar', async () => {
-    const regra = await criarRegra('Internet', 5, 9200)
-    await criarOcorrencia(regra.id, `${MES}-05`, 9200)
+  it('copia as linhas do mes anterior', async () => {
+    await lancar('Internet', `${ANTERIOR}-05`, 9200, true)
+    await lancar('Escola', `${ANTERIOR}-10`, 59000, true)
 
     const r = await openMonth(MES)
-    expect(r.created).toBe(1)
 
-    const linhas = await lancamentosDoMes()
-    expect(linhas).toHaveLength(1)
-    expect(linhas[0]!.amountCents).toBe(9200)
-    // Abre a pagar: e o que o Joao vai marcar durante o mes.
-    expect(linhas[0]!.paidAt).toBeNull()
-    expect(linhas[0]!.source).toBe('recurrence')
+    expect(r.created).toBe(2)
+    expect(r.copiedFrom).toBe(ANTERIOR)
+    expect(await doMes(MES)).toHaveLength(2)
   })
 
-  it('reabrir o mes nao duplica nada', async () => {
-    const regra = await criarRegra('Escola', 5, 59000)
-    await criarOcorrencia(regra.id, `${MES}-05`, 59000)
+  it('copia a linha mas nunca o pagamento', async () => {
+    await lancar('Internet', `${ANTERIOR}-05`, 9200, true)
 
     await openMonth(MES)
-    // Sem materializar: reabrir nao precisa reempurrar o horizonte.
-    const segunda = await openMonth(MES, 'pessoal', { materialize: false })
+
+    const novas = await doMes(MES)
+    expect(novas[0]!.paidAt).toBeNull()
+    expect(novas[0]!.amountCents).toBe(9200)
+  })
+
+  it('nao traz de volta o que sumiu do mes anterior', async () => {
+    // O ponto do bug: uma conta cancelada nao aparece no mes passado, entao ela
+    // nao deve reaparecer no mes novo, mesmo tendo existido antes.
+    await lancar('Ainda pago', `${ANTERIOR}-05`, 5000, true)
+    await lancar('Cancelei faz tempo', '2097-01-05', 9900, true)
+
+    await openMonth(MES)
+
+    const novas = await doMes(MES)
+    expect(novas).toHaveLength(1)
+    expect(novas[0]!.description).toContain('Ainda pago')
+  })
+
+  it('nao duplica se o mes ja tem lancamento', async () => {
+    await lancar('Internet', `${ANTERIOR}-05`, 9200, true)
+    await openMonth(MES)
+
+    const segunda = await openMonth(MES)
 
     expect(segunda.created).toBe(0)
-    expect(await lancamentosDoMes()).toHaveLength(1)
+    expect(await doMes(MES)).toHaveLength(1)
   })
 
-  it('nao recria o que ja veio do import ou foi lancado na mao', async () => {
-    const regra = await criarRegra('Aluguel', 10, 75000)
-    const occ = await criarOcorrencia(regra.id, `${MES}-10`, 75000)
-
-    // Simula a despesa que ja existe: a ocorrencia aponta para ela.
-    const [existente] = await db
-      .insert(transactions)
-      .values({
-        contextId: ctxId,
-        kind: 'expense',
-        amountCents: 75000,
-        description: `Aluguel ja lancado ${MARKER}`,
-        dueDate: `${MES}-10`,
-        ruleId: regra.id,
-        source: 'import',
-      })
-      .returning()
-    await db
-      .update(recurrenceOccurrences)
-      .set({ transactionId: existente!.id })
-      .where(eq(recurrenceOccurrences.id, occ.id))
+  it('nao mexe no que o Joao ja lancou na mao', async () => {
+    await lancar('Internet', `${ANTERIOR}-05`, 9200, true)
+    await lancar('Lancei na mao', `${MES}-03`, 4500)
 
     const r = await openMonth(MES)
 
+    // Mes ja comecado: a abertura nao entra por cima.
     expect(r.created).toBe(0)
-    // Uma linha so: a que ja existia. Sem dupla contagem.
-    expect(await lancamentosDoMes()).toHaveLength(1)
+    expect(await doMes(MES)).toHaveLength(1)
   })
 
-  it('respeita a ocorrencia pulada', async () => {
-    const regra = await criarRegra('Cancelado', 8, 2000)
-    const occ = await criarOcorrencia(regra.id, `${MES}-08`, 2000)
-    await db
-      .update(recurrenceOccurrences)
-      .set({ skippedAt: new Date() })
-      .where(eq(recurrenceOccurrences.id, occ.id))
-
+  it('mes anterior vazio nao gera nada', async () => {
     const r = await openMonth(MES)
-
     expect(r.created).toBe(0)
-    expect(await lancamentosDoMes()).toHaveLength(0)
+    expect(r.copiedFrom).toBeNull()
   })
 
-  it('ignora regra inativa', async () => {
-    const regra = await criarRegra('Assinatura morta', 8, 1990)
-    await criarOcorrencia(regra.id, `${MES}-08`, 1990)
-    await db.update(recurrenceRules).set({ active: false }).where(eq(recurrenceRules.id, regra.id))
-
-    const r = await openMonth(MES)
-
-    expect(r.created).toBe(0)
-  })
-
-  it('numera a parcela na descricao, como na planilha', async () => {
-    const [regra] = await db
-      .insert(recurrenceRules)
-      .values({
-        contextId: ctxId,
-        kind: 'expense',
-        label: `Parcela Carro ${MARKER}`,
-        amountCents: 150000,
-        cadence: 'monthly',
-        dayOfMonth: 12,
-        startsOn: '2099-01-01',
-        installmentCurrent: 6,
-        installmentTotal: 25,
-        installmentAnchor: '2099-01-12',
-        active: true,
-      })
-      .returning()
-
-    await db
-      .insert(recurrenceOccurrences)
-      .values({
-        ruleId: regra!.id,
-        dueDate: `${MES}-12`,
-        expectedCents: 150000,
-        installmentNo: 9,
-      })
+  it('copia receita junto com despesa', async () => {
+    await db.insert(transactions).values({
+      contextId: ctxId,
+      kind: 'income',
+      amountCents: 900000,
+      description: `Salario ${MARKER}`,
+      dueDate: `${ANTERIOR}-29`,
+      paidAt: new Date(`${ANTERIOR}-29T12:00:00-03:00`),
+      source: 'manual',
+    })
 
     await openMonth(MES)
 
-    const linhas = await lancamentosDoMes()
-    expect(linhas[0]!.description).toContain('09/25')
+    const novas = await doMes(MES)
+    expect(novas).toHaveLength(1)
+    expect(novas[0]!.kind).toBe('income')
+    // Receita tambem abre sem baixa: ainda nao entrou.
+    expect(novas[0]!.paidAt).toBeNull()
   })
 
   it('mes invalido e erro, nao um mes vazio silencioso', async () => {
-    await expect(openMonth('2099-4')).rejects.toThrow(/invalido/i)
+    await expect(openMonth('2097-4')).rejects.toThrow(/invalido/i)
+  })
+})
+
+describe('previousMonth', () => {
+  it('atravessa a virada do ano', () => {
+    expect(previousMonth('2026-09')).toBe('2026-08')
+    expect(previousMonth('2026-01')).toBe('2025-12')
+    expect(previousMonth('2026-03')).toBe('2026-02')
+  })
+})
+
+describe('shiftDay', () => {
+  it('mantem o dia quando ele existe no mes destino', () => {
+    expect(shiftDay('2026-08-05', '2026-09')).toBe('2026-09-05')
+    expect(shiftDay('2026-08-30', '2026-09')).toBe('2026-09-30')
+  })
+
+  it('cai no ultimo dia quando o dia nao existe no destino', () => {
+    // 31 de janeiro nao vira 31 de fevereiro: viraria marco e sumiria do mes.
+    expect(shiftDay('2026-01-31', '2026-02')).toBe('2026-02-28')
+    expect(shiftDay('2028-01-31', '2028-02')).toBe('2028-02-29')
+    expect(shiftDay('2026-08-31', '2026-09')).toBe('2026-09-30')
   })
 })
 
@@ -197,6 +177,5 @@ describe('monthBounds', () => {
     expect(monthBounds('2026-09')).toEqual({ from: '2026-09-01', to: '2026-09-30' })
     expect(monthBounds('2026-02')).toEqual({ from: '2026-02-01', to: '2026-02-28' })
     expect(monthBounds('2028-02')).toEqual({ from: '2028-02-01', to: '2028-02-29' })
-    expect(monthBounds('2026-12')).toEqual({ from: '2026-12-01', to: '2026-12-31' })
   })
 })

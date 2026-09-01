@@ -1,39 +1,29 @@
-import { and, eq, gte, isNull, lte } from 'drizzle-orm'
+import { and, eq, gte, isNull, lte, sql } from 'drizzle-orm'
 import { db } from '@/db'
-import {
-  contexts,
-  recurrenceOccurrences,
-  recurrenceRules,
-  transactions,
-} from '@/db/schema'
-import { materializeOccurrences } from '@/lib/recurrence/materialize'
+import { contexts, transactionEvents, transactions } from '@/db/schema'
 
 /**
- * Abre o mes: promove as ocorrencias previstas a lancamentos "a pagar".
+ * Abre o mes copiando o mes anterior, sem os pagamentos.
  *
- * Era o gesto que o Joao fazia na mao: copiar a planilha do mes anterior,
- * limpar a coluna de pago e comecar de novo. As regras de recorrencia ja
- * sabiam o que vinha (o materializador cria 13 meses de ocorrencias), mas nada
- * transformava isso nas linhas que a tabela do mes le. Setembro virou e a tela
- * mostrou 404, porque `listMonths()` so lista mes que TEM lancamento.
+ * Era exatamente o gesto do Joao na planilha: duplicar a aba do mes passado e
+ * limpar a coluna de pago. Nada de inventar linha nova.
  *
- * Idempotente por duas barreiras, e as duas importam:
+ * A primeira versao disto puxava das regras de recorrencia, e encheu setembro
+ * de coisa que ele nao paga mais: 30 das 65 regras ativas nao tinham lancamento
+ * nenhum em agosto. Sao 4 anos de planilha importada, com conta que trocou de
+ * nome ("Mensalidade Zaya" virou "Escola Zaya"), duplicata de importacao
+ * ("Marmita e Faxina" #2, #3 e #4) e divida ja quitada. A regra continua
+ * "ativa" no banco porque nunca ninguem a desativou.
  *
- * 1. `occurrenceId`: reabrir o mes nao duplica a linha ja criada.
- * 2. `transactionId` na ocorrencia: uma despesa que veio do import (ou que o
- *    Joao lancou na mao) ja ocupa o lugar da previsao, entao ela nao entra de
- *    novo. Sem isso, o fluxo de caixa contaria o mesmo gasto duas vezes.
- *
- * Nao mexe em mes que ja tem lancamento proprio: abrir e um gesto aditivo,
- * nunca destrutivo. Se o Joao ja lancou algo em setembro na mao, a abertura
- * soma as recorrencias que faltavam e deixa o que ele escreveu em paz.
+ * O mes anterior nao tem esse problema: ele e o retrato do que esta valendo
+ * agora. Se a conta apareceu mes passado, ela e real.
  */
 
 export interface OpenMonthResult {
   month: string
   created: number
-  /** Ja existiam: ou de uma abertura anterior, ou do import. */
-  skipped: number
+  /** De onde as linhas vieram: qual mes foi copiado. */
+  copiedFrom: string | null
 }
 
 export function monthBounds(month: string): { from: string; to: string } {
@@ -42,96 +32,98 @@ export function monthBounds(month: string): { from: string; to: string } {
   return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, '0')}` }
 }
 
+export function previousMonth(month: string): string {
+  const [y, m] = month.split('-').map(Number) as [number, number]
+  const d = new Date(Date.UTC(y, m - 2, 1))
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+/**
+ * Move o dia para o mes destino, respeitando o tamanho dele.
+ *
+ * Dia 31 em fevereiro nao existe: cai no ultimo dia. Sem isso a data viraria
+ * marco e o lancamento sumiria do mes que acabou de abrir.
+ */
+export function shiftDay(dueDate: string, targetMonth: string): string {
+  const dia = Number(dueDate.slice(8, 10))
+  const [y, m] = targetMonth.split('-').map(Number) as [number, number]
+  const ultimo = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return `${targetMonth}-${String(Math.min(dia, ultimo)).padStart(2, '0')}`
+}
+
 export async function openMonth(
   month: string,
   contextSlug = 'pessoal',
-  /* Empurrar o horizonte custa caro (69 regras x 13 meses) e so faz diferenca
-   * na primeira abertura do mes. Reabrir uma pagina ja aberta nao precisa. */
-  { materialize = true }: { materialize?: boolean } = {},
 ): Promise<OpenMonthResult> {
   if (!/^\d{4}-\d{2}$/.test(month)) throw new Error(`Mes invalido: "${month}"`)
-
-  const { from, to } = monthBounds(month)
 
   const [ctx] = await db.select().from(contexts).where(eq(contexts.slug, contextSlug)).limit(1)
   if (!ctx) throw new Error(`Contexto "${contextSlug}" nao encontrado`)
 
-  /* Empurra o horizonte antes de abrir.
-   *
-   * O materializador cria 13 meses de ocorrencias a partir do mes corrente, mas
-   * nunca era chamado por ninguem: o horizonte era o que o backfill deixou, e
-   * um dia acabaria. E idempotente pelo unique (ruleId, dueDate). */
-  if (materialize) await materializeOccurrences(contextSlug)
+  const { from, to } = monthBounds(month)
 
-  // Ocorrencias do mes que ainda nao viraram lancamento nem foram puladas.
-  const pending = await db
-    .select({
-      occurrenceId: recurrenceOccurrences.id,
-      dueDate: recurrenceOccurrences.dueDate,
-      expectedCents: recurrenceOccurrences.expectedCents,
-      installmentNo: recurrenceOccurrences.installmentNo,
-      ruleId: recurrenceRules.id,
-      kind: recurrenceRules.kind,
-      label: recurrenceRules.label,
-      categoryId: recurrenceRules.categoryId,
-      accountId: recurrenceRules.accountId,
-      amountExpression: recurrenceRules.amountExpression,
-      installmentTotal: recurrenceRules.installmentTotal,
-    })
-    .from(recurrenceOccurrences)
-    .innerJoin(recurrenceRules, eq(recurrenceRules.id, recurrenceOccurrences.ruleId))
+  /* Ja tem lancamento proprio? Entao o mes ja foi aberto, ou o Joao comecou a
+   * preencher na mao. Abrir de novo so duplicaria o que ele ja fez. */
+  const [existente] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(transactions)
     .where(
       and(
-        eq(recurrenceRules.contextId, ctx.id),
-        eq(recurrenceRules.active, true),
-        gte(recurrenceOccurrences.dueDate, from),
-        lte(recurrenceOccurrences.dueDate, to),
-        isNull(recurrenceOccurrences.transactionId),
-        isNull(recurrenceOccurrences.skippedAt),
+        eq(transactions.contextId, ctx.id),
+        gte(transactions.dueDate, from),
+        lte(transactions.dueDate, to),
       ),
     )
 
-  if (pending.length === 0) return { month, created: 0, skipped: 0 }
+  if ((existente?.n ?? 0) > 0) return { month, created: 0, copiedFrom: null }
 
-  let created = 0
+  const anterior = previousMonth(month)
+  const ant = monthBounds(anterior)
 
-  for (const p of pending) {
-    // A parcela mostra onde esta na serie, como na planilha: "06/25".
-    const description =
-      p.installmentNo && p.installmentTotal
-        ? `${p.label} ${String(p.installmentNo).padStart(2, '0')}/${p.installmentTotal}`
-        : p.label
+  const modelo = await db
+    .select()
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.contextId, ctx.id),
+        gte(transactions.dueDate, ant.from),
+        lte(transactions.dueDate, ant.to),
+      ),
+    )
 
-    const [tx] = await db
-      .insert(transactions)
-      .values({
-        contextId: ctx.id,
-        kind: p.kind,
-        amountCents: p.expectedCents,
-        amountExpression: p.amountExpression,
-        description,
-        categoryId: p.categoryId,
-        accountId: p.accountId,
-        dueDate: p.dueDate,
-        // Aberto e nao pago: e justamente o que o Joao vai marcar durante o mes.
-        paidAt: null,
-        ruleId: p.ruleId,
-        occurrenceId: p.occurrenceId,
-        source: 'recurrence',
-      })
-      .returning({ id: transactions.id })
+  if (modelo.length === 0) return { month, created: 0, copiedFrom: null }
 
-    if (!tx) continue
+  const novos = modelo.map((t) => ({
+    contextId: ctx.id,
+    kind: t.kind,
+    amountCents: t.amountCents,
+    amountExpression: t.amountExpression,
+    amountInputs: t.amountInputs,
+    description: t.description,
+    categoryId: t.categoryId,
+    accountId: t.accountId,
+    dueDate: shiftDay(t.dueDate, month),
+    /* O ponto todo: copia a linha, nao o pagamento. */
+    paidAt: null,
+    ruleId: t.ruleId,
+    /* `occurrenceId` NAO e copiado: aquela ocorrencia pertence ao mes passado.
+     * Herda-la faria duas transacoes apontarem para a mesma previsao. */
+    source: 'recurrence' as const,
+  }))
 
-    // Fecha o ciclo: a ocorrencia passa a apontar para a transacao, entao o
-    // fluxo de caixa para de conta-la como previsao solta.
-    await db
-      .update(recurrenceOccurrences)
-      .set({ transactionId: tx.id })
-      .where(eq(recurrenceOccurrences.id, p.occurrenceId))
+  const criados = await db.insert(transactions).values(novos).returning({ id: transactions.id })
 
-    created++
+  // Abre o historico de cada linha nova, senao a trilha comeca no meio.
+  if (criados.length > 0) {
+    await db.insert(transactionEvents).values(
+      criados.map((c) => ({
+        transactionId: c.id,
+        kind: 'created',
+        fromValue: null,
+        toValue: `copiado de ${anterior}`,
+      })),
+    )
   }
 
-  return { month, created, skipped: pending.length - created }
+  return { month, created: criados.length, copiedFrom: anterior }
 }
