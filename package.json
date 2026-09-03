@@ -22,7 +22,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",
     "@neondatabase/serverless": "^1.1.0",
-    "@node-rs/argon2": "^2.0.2",
+    "@node-rs/argon2": "^2.1.0",
     "dayjs": "^1.11.21",
     "decimal.js": "^10.6.0",
     "drizzle-orm": "^0.45.2",
